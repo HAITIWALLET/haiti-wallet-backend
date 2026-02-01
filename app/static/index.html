@@ -1,0 +1,769 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Haiti Wallet</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:#f6f8fb}
+    .wrap{max-width:980px;margin:28px auto;padding:0 16px}
+    .card{background:#fff;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.06);padding:18px}
+    .row{display:flex;gap:16px;flex-wrap:wrap}
+    .section{margin-top:14px}
+    .muted{color:#667085;font-size:13px}
+    .big{font-size:34px;font-weight:800;letter-spacing:-.02em}
+    input,select,button,textarea{width:100%;padding:12px 12px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px;box-sizing:border-box}
+    textarea{min-height:90px}
+    button{cursor:pointer;border:none}
+    .primary{background:#2563eb;color:#fff;font-weight:700}
+    .secondary{background:#64748b;color:#fff;font-weight:700}
+    .dark{background:#0f172a;color:#fff;font-weight:800}
+    .inline{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .hide{display:none}
+    .ok{background:#ecfdf3;border:1px solid #bbf7d0;color:#166534;padding:10px;border-radius:10px}
+    .err{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:10px;border-radius:10px}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px;border-bottom:1px solid #eef2f7;font-size:13px;text-align:left;vertical-align:top}
+    .pill{display:inline-block;padding:4px 10px;border-radius:999px;font-weight:800;font-size:12px}
+    .pillPending{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412}
+    .pillApproved{background:#ecfdf3;border:1px solid #bbf7d0;color:#166534}
+    .pillRejected{background:#fef2f2;border:1px solid #fecaca;color:#991b1b}
+    .btnSmall{padding:8px 10px;border-radius:10px;font-size:13px}
+    .btnOk{background:#16a34a;color:#fff;font-weight:900}
+    .btnNo{background:#dc2626;color:#fff;font-weight:900}
+    .info{background:#eef2ff;border:1px solid #c7d2fe;color:#1e3a8a;padding:12px;border-radius:12px}
+
+    /* MENU */
+    .nav{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    .tabbtn{padding:10px 12px;border-radius:999px;background:#eef2ff;color:#1e3a8a;font-weight:800}
+    .tabbtn.active{background:#1e3a8a;color:#fff}
+
+    /* AUTH TOGGLE */
+    .authTabs{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+    .authTab{padding:10px 12px;border-radius:999px;background:#eef2ff;color:#1e3a8a;font-weight:900}
+    .authTab.active{background:#1e3a8a;color:#fff}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <h1 style="margin:0">Haiti Wallet</h1>
+        <div id="badge" class="ok hide" style="padding:6px 10px;border-radius:999px">Connecté</div>
+      </div>
+
+      <!-- LOGIN + REGISTER (TOGGLE) -->
+      <div id="loginBox" class="section">
+        <div class="authTabs">
+          <button id="tabAuthLogin" class="authTab active" type="button">Connexion</button>
+          <button id="tabAuthRegister" class="authTab" type="button">S’inscrire</button>
+        </div>
+
+        <!-- LOGIN VIEW -->
+        <div id="authLoginView">
+          <h3 style="margin:10px 0">Connexion</h3>
+          <div class="inline">
+            <input id="email" placeholder="Email" />
+            <input id="password" placeholder="Mot de passe" type="password" />
+          </div>
+          <div style="height:10px"></div>
+          <button id="btnLogin" class="primary" type="button">Se connecter</button>
+
+          <!-- ✅ AJOUT: MOT DE PASSE OUBLIÉ -->
+          <div style="height:10px"></div>
+          <button id="btnForgot" class="secondary" type="button">Mot de passe oublié ?</button>
+
+          <div style="height:10px"></div>
+
+          <!-- ✅ AJOUT: BOX RESET PASSWORD (masquée par défaut) -->
+          <div id="forgotBox" class="hide">
+            <div class="info" style="margin-bottom:10px">
+              <div style="font-weight:900;margin-bottom:6px">Réinitialisation du mot de passe</div>
+              <div class="muted">
+                Entre ton email, clique “Envoyer le code”, puis colle le code reçu et choisis un nouveau mot de passe.
+              </div>
+            </div>
+
+            <input id="fpEmail" placeholder="Ton email" />
+            <div style="height:10px"></div>
+
+            <button id="btnSendResetCode" class="dark" type="button">Envoyer le code</button>
+            <div style="height:10px"></div>
+
+            <input id="fpToken" placeholder="Code reçu (8 caractères)" />
+            <div style="height:10px"></div>
+
+            <input id="fpNewPass" placeholder="Nouveau mot de passe (min 6)" type="password" />
+            <div style="height:10px"></div>
+
+            <button id="btnResetPass" class="primary" type="button">Réinitialiser</button>
+            <div style="height:10px"></div>
+
+            <div id="forgotMsg" class="hide"></div>
+          </div>
+          <!-- ✅ FIN AJOUT -->
+
+          <div style="height:10px"></div>
+          <div id="loginMsg" class="hide"></div>
+          <div class="muted" style="margin-top:8px">Backend attendu: http://127.0.0.1:8002</div>
+        </div>
+
+        <!-- REGISTER VIEW -->
+        <div id="authRegisterView" class="hide">
+          <h3 style="margin:10px 0">S’inscrire</h3>
+
+          <div class="info" style="margin-bottom:10px">
+            <div style="font-weight:900;margin-bottom:6px">Parrainage (optionnel)</div>
+            <div class="muted">
+              Si tu as un code, colle-le ici. Sinon laisse vide : tu peux créer ton compte quand même.
+            </div>
+          </div>
+
+          <!-- IMPORTANT: IDs alignés avec app.js -->
+          <div id="register-box">
+
+            <!-- ✅ AJOUT: Identité légale -->
+            <div class="info" style="margin-bottom:10px">
+              <div style="font-weight:900;margin-bottom:6px">Identité & vérification</div>
+              <div class="muted">
+                Renseigne ton prénom/nom légaux et vérifie ton numéro de téléphone avec un code.
+              </div>
+            </div>
+
+            <div class="inline">
+              <input id="reg-first" placeholder="Prénom légal" />
+              <input id="reg-last" placeholder="Nom légal" />
+            </div>
+
+            <div style="height:10px"></div>
+
+            <!-- ✅ AJOUT: Téléphone + envoi OTP -->
+            <div class="inline">
+              <input id="reg-phone" placeholder="Numéro téléphone (ex: +509..., 514...)" />
+              <button id="btnSendOtp" class="secondary" style="max-width:220px" type="button">Envoyer code</button>
+            </div>
+
+            <div style="height:10px"></div>
+
+            <!-- ✅ AJOUT: champ code OTP -->
+            <input id="reg-otp" placeholder="Code de vérification (SMS)" />
+
+            <div style="height:10px"></div>
+            <!-- ✅ FIN AJOUT -->
+
+            <div class="inline">
+              <input id="reg-email" placeholder="Email" />
+              <input id="reg-pass" placeholder="Mot de passe (min 6)" type="password" />
+            </div>
+            <div style="height:10px"></div>
+            <input id="reg-ref" placeholder="Code parrainage (optionnel)" />
+            <div style="height:10px"></div>
+
+            <button id="do-register" class="primary" type="button">Créer mon compte</button>
+            <div style="height:10px"></div>
+            <div id="registerMsg" class="hide"></div>
+
+            <div class="muted" style="margin-top:8px">
+              Après inscription, reviens sur “Connexion” pour te connecter.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- APP -->
+      <div id="appBox" class="section hide">
+        <div class="muted" id="who"></div>
+
+        <!-- MENU -->
+        <div class="nav">
+          <button id="tabBtn-dashboard" class="tabbtn">Dashboard</button>
+          <button id="tabBtn-topup" class="tabbtn">Recharge</button>
+          <button id="tabBtn-transfer" class="tabbtn">Transfert</button>
+          <button id="tabBtn-history" class="tabbtn">Historique</button>
+          <button id="tabBtn-partners" class="tabbtn">Dépenser</button>
+          <button id="tabBtn-info" class="tabbtn">Info</button>
+          <button id="tabBtn-admin" class="tabbtn hide">Admin</button>
+        </div>
+
+        <!-- DASHBOARD -->
+        <div class="card section">
+          <div class="inline" style="justify-content:space-between;align-items:center">
+            <h3 style="margin:0">Parrainez</h3>
+            <button id="btnCopyRef" class="secondary" style="max-width:200px" type="button">Copier mon code</button>
+          </div>
+
+          <div style="height:10px"></div>
+
+          <div class="muted">
+            Invite un ami avec ton code. S’il s’inscrit avec ton code et fait une recharge d’au moins <b>250 HTG</b>,
+            ça compte comme <b>1 filleul validé</b>.
+            À <b>3 filleuls validés</b>, tu reçois <b>500 HTG</b> (bonus donné <b>une seule fois</b>).
+          </div>
+
+          <div style="height:10px"></div>
+          <div class="info">
+            <div class="muted">Ton code :</div>
+            <div style="font-size:20px;font-weight:900;letter-spacing:1px" id="myRefCode">—</div>
+            <div id="refMsg" class="hide" style="margin-top:10px"></div>
+          </div>
+        </div>
+
+        <div id="tab-dashboard" class="section">
+          <div class="row section">
+            <div class="card" style="flex:1;min-width:260px">
+              <div class="muted">Solde HTG</div>
+              <div id="balHtg" class="big">0.00</div>
+            </div>
+
+            <div class="card" style="flex:1;min-width:260px">
+              <div class="muted">Solde USD (réel)</div>
+              <div id="balUsdReal" class="big">0.00</div>
+
+              <div style="height:8px"></div>
+              <div class="muted">Solde USD (équivalent HTG)</div>
+              <div id="balUsdEq" class="big">≈ 0.00</div>
+
+              <div style="height:6px"></div>
+              <div class="muted" id="rateHint"></div>
+
+              <div style="height:10px"></div>
+              <div class="inline">
+                <select id="convDirection" style="max-width:210px">
+                  <option value="htg_to_usd">HTG → USD</option>
+                  <option value="usd_to_htg">USD → HTG</option>
+                </select>
+                <input id="convAmount" type="number" step="0.01" placeholder="Montant" />
+                <button id="btnConvert" class="dark" style="min-width:180px" type="button">Convertir</button>
+              </div>
+              <div style="height:10px"></div>
+              <div id="convMsg" class="hide"></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <button id="btnRefresh" class="secondary" type="button">Rafraîchir</button>
+          </div>
+        </div>
+
+        <!-- TOPUP -->
+        <div id="tab-topup" class="section hide">
+
+          <!-- PAYMENT INSTRUCTIONS (METHOD-BASED) -->
+          <div class="card section">
+            <h3 style="margin:0 0 10px">Avant de soumettre la demande</h3>
+            <div class="info">
+              <div style="font-weight:900;margin-bottom:6px">1) Envoie l’argent à Haiti Wallet</div>
+              <div class="muted" style="margin-bottom:10px">
+                Choisis ta méthode, puis utilise le numéro/email affiché ci-dessous. Ensuite reviens et remplis la demande avec la référence du reçu.
+              </div>
+
+              <div class="inline">
+                <div style="flex:1;min-width:240px">
+                  <div class="muted" style="margin-bottom:6px">Méthode sélectionnée</div>
+                  <div id="payMethodLabel" style="font-weight:900">—</div>
+                </div>
+
+                <div style="flex:2;min-width:260px">
+                  <div class="muted" style="margin-bottom:6px">À envoyer vers</div>
+                  <div id="payTo" style="font-weight:900">—</div>
+                </div>
+
+                <div style="max-width:200px">
+                  <div class="muted" style="margin-bottom:6px">&nbsp;</div>
+                  <button id="btnCopyPay" class="dark btnSmall" type="button">Copier</button>
+                </div>
+              </div>
+
+              <div style="height:10px"></div>
+              <div class="muted" id="payHow">—</div>
+            </div>
+          </div>
+
+          <!-- TOPUP REQUEST FORM -->
+          <div class="card section">
+            <h3 style="margin:0 0 10px">Recharge — Demande (SAFE)</h3>
+            <div class="muted" style="margin-bottom:10px">
+              Statut: <b>PENDING</b> → <b>APPROVED</b>/<b>REJECTED</b> (après vérification).
+            </div>
+
+            <div class="inline">
+              <select id="topMethod">
+                <option value="interac">interac</option>
+                <option value="moncash">moncash</option>
+                <option value="natcash">natcash</option>
+              </select>
+              <select id="topCurrency">
+                <option value="htg">htg</option>
+                <option value="usd">usd</option>
+              </select>
+              <input id="topAmount" type="number" step="0.01" placeholder="Montant" />
+            </div>
+
+            <div style="height:10px"></div>
+            <input id="topReference" placeholder="Référence paiement (code/ID reçu)" />
+            <div style="height:10px"></div>
+            <input id="topProof" placeholder="Preuve (URL optionnel: capture, reçu…)" />
+            <div style="height:10px"></div>
+            <input id="topNote" placeholder="Note (optionnel)" />
+
+            <div style="height:10px"></div>
+            <button id="btnTopupRequest" class="primary" type="button">Soumettre la demande</button>
+            <div style="height:10px"></div>
+            <div id="topMsg" class="hide"></div>
+          </div>
+
+          <!-- PENDING REQUESTS -->
+          <div class="card section">
+            <div class="inline" style="justify-content:space-between">
+              <h3 style="margin:0">Demandes en attente (PENDING)</h3>
+              <button id="btnMyTopups" class="secondary" style="max-width:220px" type="button">Rafraîchir</button>
+            </div>
+
+            <!-- EXPORT (NEW) -->
+            <div class="inline" style="justify-content:space-between;margin-top:10px">
+              <button id="btnExportMyTopupsCsv" class="dark btnSmall" style="max-width:240px" type="button">Exporter mes recharges (CSV)</button>
+              <div id="topupsExportMsg" class="hide" style="flex:1"></div>
+            </div>
+
+            <div style="height:10px"></div>
+            <div id="myTopupsMsg" class="hide"></div>
+
+            <div style="overflow:auto">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Montant</th>
+                    <th>Devise</th>
+                    <th>Méthode</th>
+                    <th>Référence</th>
+                    <th>Créé</th>
+                    <th>Statut</th>
+                  </tr>
+                </thead>
+                <tbody id="myTopupsPendingBody">
+                  <tr><td colspan="7" class="muted">Aucune demande en attente</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- TOPUP HISTORY (SEPARATE) -->
+          <div class="card section">
+            <div class="inline" style="justify-content:space-between">
+              <h3 style="margin:0">Historique des recharges (décidées)</h3>
+              <button id="btnMyTopups2" class="secondary" style="max-width:220px" type="button">Rafraîchir</button>
+            </div>
+            <div class="muted" style="margin-top:6px">
+              Ici, tu vois les recharges <b>APPROVED/REJECTED</b> (séparées de l’historique des transactions du wallet).
+            </div>
+
+            <div style="height:10px"></div>
+            <div style="overflow:auto">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Montant</th>
+                    <th>Devise</th>
+                    <th>Méthode</th>
+                    <th>Référence</th>
+                    <th>Créé</th>
+                    <th>Décidé</th>
+                    <th>Statut</th>
+                    <th>Note admin</th>
+                  </tr>
+                </thead>
+                <tbody id="myTopupsHistoryBody">
+                  <tr><td colspan="9" class="muted">Aucun historique</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TRANSFER -->
+        <div id="tab-transfer" class="section hide">
+          <div class="card section">
+            <h3 style="margin:0 0 10px">Transfert</h3>
+            <input id="toEmail" placeholder="Email destinataire" />
+            <div style="height:10px"></div>
+            <div class="inline">
+              <select id="txCurrency">
+                <option value="htg">htg</option>
+                <option value="usd">usd</option>
+              </select>
+              <input id="txAmount" type="number" step="0.01" placeholder="Montant" />
+            </div>
+            <div style="height:10px"></div>
+            <input id="txNote" placeholder="Note" />
+            <div style="height:10px"></div>
+            <button id="btnSend" class="primary" type="button">Envoyer</button>
+            <div style="height:10px"></div>
+            <div id="txMsg" class="hide"></div>
+          </div>
+        </div>
+
+        <!-- HISTORY (WALLET TRANSACTIONS) -->
+        <div id="tab-history" class="section hide">
+          <div class="card section">
+            <div class="inline" style="justify-content:space-between;align-items:center">
+              <h3 style="margin:0">Historique (transactions du wallet)</h3>
+              <button id="btnExportTxCsv" class="dark btnSmall" style="max-width:220px" type="button">Exporter transactions (CSV)</button>
+            </div>
+
+            <div style="height:8px"></div>
+            <div id="histExportMsg" class="hide"></div>
+
+            <div class="muted" id="histHint" style="margin-top:6px"></div>
+            <div style="height:10px"></div>
+            <div style="overflow:auto">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Devise</th>
+                    <th>Montant</th>
+                    <th>Détails</th>
+                  </tr>
+                </thead>
+                <tbody id="histBody">
+                  <tr><td colspan="5" class="muted">Aucune transaction</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- PARTNERS -->
+        <div id="tab-partners" class="section hide">
+          <div class="card section">
+            <h3 style="margin:0 0 10px">Où dépenser tes crédits</h3>
+            <div class="muted" style="margin-bottom:10px">
+              Voici les plateformes/partenaires qui acceptent les crédits Haiti Wallet.
+            </div>
+
+            <button id="btnPartnersRefresh" class="secondary" style="max-width:240px" type="button">Rafraîchir</button>
+            <div style="height:10px"></div>
+            <div id="partnersMsg" class="hide"></div>
+
+            <div style="overflow:auto">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Nom</th>
+                    <th>Catégorie</th>
+                    <th>Description</th>
+                    <th>Lien</th>
+                  </tr>
+                </thead>
+                <tbody id="partnersBody">
+                  <tr><td colspan="4" class="muted">Aucun partenaire</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- ADMIN: ajouter partenaires -->
+          <div id="partnersAdminBox" class="card section hide">
+            <h3 style="margin:0 0 10px">Admin — Ajouter un partenaire</h3>
+
+            <div class="inline">
+              <input id="pName" placeholder="Nom (ex: Boutique XYZ)" />
+              <input id="pCategory" placeholder="Catégorie (ex: shop, food, services)" />
+            </div>
+            <div style="height:10px"></div>
+            <input id="pUrl" placeholder="Lien (https://...)" />
+            <div style="height:10px"></div>
+            <input id="pLogo" placeholder="Logo URL (optionnel)" />
+            <div style="height:10px"></div>
+            <input id="pDesc" placeholder="Description (optionnel)" />
+            <div style="height:10px"></div>
+
+            <button id="btnPartnerAdd" class="primary" style="max-width:240px" type="button">Ajouter</button>
+            <div style="height:10px"></div>
+            <div id="partnerAddMsg" class="hide"></div>
+
+            <div style="height:14px"></div>
+            <h3 style="margin:0 0 10px">Admin — Gérer (activer/désactiver)</h3>
+            <button id="btnPartnersAdminRefresh" class="secondary" style="max-width:280px" type="button">Rafraîchir admin</button>
+
+            <div style="height:10px"></div>
+            <div style="overflow:auto">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Nom</th>
+                    <th>Catégorie</th>
+                    <th>Actif</th>
+                    <th>Lien</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="partnersAdminBody">
+                  <tr><td colspan="6" class="muted">—</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- INFO -->
+        <div id="tab-info" class="section hide">
+          <!-- START INFO (copie de ton contenu) -->
+          <div class="card section">
+            <h3 style="margin:0 0 10px">Informations — Haiti Wallet</h3>
+            <div class="muted">
+              Haiti Wallet est un service numérique de gestion de crédits (HTG / USD) permettant de recharger, transférer et consulter l’historique.
+              <b>Haiti Wallet n’est pas une banque</b> et ne remplace pas un compte bancaire. Notre priorité est la transparence : <b>zéro surprise</b>.
+            </div>
+          </div>
+
+          <div class="card section">
+            <h4 style="margin:0 0 8px">1) Comment ça marche (simple et clair)</h4>
+            <div class="muted">
+              <ul style="margin:8px 0 0 18px">
+                <li><b>Recharge</b> : tu envoies l’argent (MonCash / NatCash / Interac) puis tu crées une demande avec une <b>référence</b> (code reçu).</li>
+                <li><b>Validation manuelle</b> : un admin vérifie la référence / preuve, puis approuve ou refuse.</li>
+                <li><b>Crédit</b> : si approuvé, ton wallet est crédité du <b>montant net</b> (montant − frais).</li>
+                <li><b>Transfert</b> : tu peux transférer des crédits vers un autre utilisateur (selon disponibilité de la fonction).</li>
+                <li><b>Partenaires</b> : la page “Dépenser” liste des plateformes/partenaires qui acceptent Haiti Wallet (liens externes).</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="card section">
+            <h4 style="margin:0 0 8px">2) Frais — transparence totale</h4>
+            <div class="muted">
+              Les frais sont appliqués <b>uniquement à l’entrée</b> (recharge), jamais à la sortie.
+              Les montants de frais sont <b>les mêmes en HTG et en USD</b> (aucune conversion automatique).
+              <div style="height:10px"></div>
+              <div class="info">
+                <div style="font-weight:900;margin-bottom:6px">Barème</div>
+                <div class="muted">
+                  0–20 → <b>1.50</b><br/>
+                  21–50 → <b>3.00</b><br/>
+                  51–70 → <b>5.00</b><br/>
+                  71–100+ → <b>7.50</b>
+                </div>
+                <div style="height:10px"></div>
+                <div class="muted">
+                  Exemple : Recharge 50 → frais 3.00 → net 47.00.
+                </div>
+              </div>
+              <div style="height:10px"></div>
+              <div class="muted">
+                Chaque recharge approuvée génère des écritures d’audit dans l’historique (traçabilité).
+              </div>
+            </div>
+          </div>
+
+          <div class="card section">
+            <h4 style="margin:0 0 8px">3) Recharges — règles et délais</h4>
+            <div class="muted">
+              <ul style="margin:8px 0 0 18px">
+                <li><b>Traitement manuel</b> : toute recharge est vérifiée avant approbation.</li>
+                <li><b>Référence obligatoire</b> : sans référence (ou référence invalide), la recharge peut être refusée.</li>
+                <li><b>Preuve</b> : une preuve (URL ou capture) peut être demandée pour confirmer le paiement.</li>
+                <li><b>Délais</b> : le délai dépend de la disponibilité des admins et du volume de demandes.</li>
+                <li><b>Refus</b> : reçu falsifié, incohérence, suspicion de fraude, ou paiement introuvable.</li>
+              </ul>
+              <div style="height:8px"></div>
+              <div class="muted">
+                <b>Important</b> : Haiti Wallet ne promet pas de retrait automatique. Les paiements externes restent soumis aux règles des opérateurs (MonCash/NatCash/Interac).
+              </div>
+            </div>
+          </div>
+
+          <div class="card section">
+            <h4 style="margin:0 0 8px">4) Partenaires / Dépenser</h4>
+            <div class="muted">
+              La section “Dépenser” fournit des liens vers des plateformes/partenaires externes.
+              <b>Haiti Wallet ne contrôle pas</b> les services, contenus, prix, abonnements ou politiques de ces plateformes.
+              <div style="height:10px"></div>
+              <ul style="margin:8px 0 0 18px">
+                <li>Tu restes responsable de tes choix sur les plateformes externes.</li>
+                <li>En cas de litige avec un partenaire externe, le support Haiti Wallet peut aider à vérifier la transaction interne (historique), mais ne peut pas forcer un remboursement externe.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="card section">
+            <h4 style="margin:0 0 8px">5) Sécurité & bonnes pratiques</h4>
+            <div class="muted">
+              <ul style="margin:8px 0 0 18px">
+                <li>Ne partage jamais ton mot de passe, ni ton code de transaction.</li>
+                <li>Utilise un mot de passe unique et fort (évite les mots de passe réutilisés).</li>
+                <li>Vérifie toujours l’adresse/numéro de destination avant d’envoyer un paiement (MonCash/NatCash/Interac).</li>
+                <li>En cas de doute, stoppe l’action et contacte le support.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="card section">
+            <h4 style="margin:0 0 8px">6) Confidentialité — données collectées</h4>
+            <div class="muted">
+              Haiti Wallet collecte uniquement les données nécessaires au fonctionnement et à la sécurité :
+              <ul style="margin:8px 0 0 18px">
+                <li><b>Compte</b> : email, rôle (user/admin), informations techniques de session (selon serveur).</li>
+                <li><b>Transactions</b> : montants, devise, type (recharge, frais, transfert, ajustement admin), date/heure, notes.</li>
+                <li><b>Recharges</b> : méthode, référence, preuve (si fournie), statut (pending/approved/rejected), note admin.</li>
+              </ul>
+              <div style="height:8px"></div>
+              <div class="muted">
+                <b>Nous ne vendons pas</b> tes données. Elles ne sont partagées qu’en cas de nécessité légale, ou pour lutter contre la fraude.
+              </div>
+            </div>
+          </div>
+
+          <div class="card section">
+            <h4 style="margin:0 0 8px">7) Conservation & suppression</h4>
+            <div class="muted">
+              Les données de transaction peuvent être conservées pour :
+              <ul style="margin:8px 0 0 18px">
+                <li>Assurer l’audit (preuve des opérations).</li>
+                <li>Prévenir la fraude.</li>
+                <li>Résoudre les litiges.</li>
+              </ul>
+              <div style="height:8px"></div>
+              <div class="muted">
+                Pour une demande de suppression/rectification (si applicable), contacte le support avec ton email de compte.
+                Certaines données d’audit peuvent être conservées pour des raisons légales et de sécurité.
+              </div>
+            </div>
+          </div>
+
+          <div class="card section">
+            <h4 style="margin:0 0 8px">8) Interdictions & conformité</h4>
+            <div class="muted">
+              Sont strictement interdits :
+              <ul style="margin:8px 0 0 18px">
+                <li>Faux reçus, falsification, fraude, usurpation.</li>
+                <li>Blanchiment, financement illégal, activités interdites par la loi.</li>
+                <li>Revente non autorisée de crédits ou contournement des contrôles.</li>
+                <li>Multiples comptes pour tromper la validation (abus).</li>
+              </ul>
+              <div style="height:8px"></div>
+              <div class="muted">
+                Toute activité suspecte peut entraîner : <b>refus de recharge</b>, <b>suspension</b> ou <b>blocage</b> du compte, avec audit interne.
+              </div>
+            </div>
+          </div>
+
+          <div class="card section">
+            <h4 style="margin:0 0 8px">9) Limitation de responsabilité</h4>
+            <div class="muted">
+              Haiti Wallet fournit un service logiciel “tel quel”.
+              Nous faisons le maximum pour sécuriser le service, mais nous ne garantissons pas :
+              <ul style="margin:8px 0 0 18px">
+                <li>La disponibilité continue (maintenance, incidents réseau, opérateurs externes).</li>
+                <li>Les retards dus aux vérifications manuelles.</li>
+                <li>Les problèmes provenant de MonCash/NatCash/Interac ou de plateformes externes.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="card section">
+            <h4 style="margin:0 0 8px">10) Nous contacter</h4>
+            <div class="muted">
+              Support email : <b>humanite.quebec.haiti@gmail.com</b><br/>
+              WhatsApp : <b>+509 48 50 4686</b><br/>
+              Haiti : <b>+509 48 07 1798</b><br/>
+              <div style="height:8px"></div>
+              <div class="muted">
+                Pour accélérer une vérification, fournis : email du compte, méthode, montant, devise, référence, date/heure approximative.
+              </div>
+            </div>
+          </div>
+
+          <div class="card section">
+            <div class="muted">
+              <b>Dernière mise à jour :</b> 30/01/2026
+            </div>
+          </div>
+          <!-- END INFO -->
+        </div>
+
+        <!-- ADMIN -->
+        <div id="tab-admin" class="section hide">
+          <div id="adminBox" class="card section">
+            <div class="inline" style="justify-content:space-between;align-items:center">
+              <h3 style="margin:0">Admin — Recharges en attente</h3>
+              <button id="btnExportAdminTopupsCsv" class="dark btnSmall" style="max-width:230px" type="button">Exporter pending (CSV)</button>
+            </div>
+
+            <div style="height:8px"></div>
+            <div id="adminExportMsg" class="hide"></div>
+
+            <div class="muted" style="margin-bottom:10px">Seulement visible si ton compte a role=admin.</div>
+
+            <div class="inline">
+              <button id="btnAdminRefresh" class="secondary" type="button">Rafraîchir les demandes</button>
+              <input id="adminNote" placeholder="Note admin (optionnel, appliquée quand tu cliques approuver/refuser)" />
+            </div>
+
+            <div style="height:10px"></div>
+            <div id="adminTopupsMsg" class="hide"></div>
+
+            <div style="overflow:auto">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>User</th>
+                    <th>Montant</th>
+                    <th>Devise</th>
+                    <th>Méthode</th>
+                    <th>Référence</th>
+                    <th>Créé</th>
+                    <th>Statut</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="adminTopupsBody">
+                  <tr><td colspan="9" class="muted">Aucune demande en attente</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <!-- Les cartes injectées par app.js (stats, adjust, superadminCard) vont se mettre ici automatiquement -->
+        </div>
+
+        <div class="section">
+          <button id="btnLogout" class="secondary" type="button">Se déconnecter</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+
+  <!-- MINI TOGGLE (fallback) -->
+  <script>
+    (function(){
+      const tabLogin = document.getElementById("tabAuthLogin");
+      const tabReg = document.getElementById("tabAuthRegister");
+      const viewLogin = document.getElementById("authLoginView");
+      const viewReg = document.getElementById("authRegisterView");
+
+      if(tabLogin && tabReg && viewLogin && viewReg){
+        tabLogin.addEventListener("click", () => {
+          tabLogin.classList.add("active");
+          tabReg.classList.remove("active");
+          viewLogin.classList.remove("hide");
+          viewReg.classList.add("hide");
+        });
+        tabReg.addEventListener("click", () => {
+          tabReg.classList.add("active");
+          tabLogin.classList.remove("active");
+          viewReg.classList.remove("hide");
+          viewLogin.classList.add("hide");
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
