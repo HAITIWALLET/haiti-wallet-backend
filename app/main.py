@@ -53,7 +53,7 @@ def seed_superadmin():
             # ✅ créer superadmin avec les champs minimaux sûrs
             u = User(
                 email=email,
-                password_hash=hash_password("admin1234"),  # change après
+                password_hash=hash_password("1234"),  # change après
                 role="superadmin",
             )
 
