@@ -95,6 +95,9 @@ class ResetPasswordOut(BaseModel):
     ok: bool = True
     message: str
 
+class ChangePasswordSchema(BaseModel):
+    old_password: str
+    new_password: str
 
 # -------------------------
 # FX

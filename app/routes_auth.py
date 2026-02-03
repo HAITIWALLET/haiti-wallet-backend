@@ -12,7 +12,8 @@ from .schemas import (
     TokenOut, MeOut,
     PhoneStartIn, PhoneVerifyIn,
     ForgotPasswordIn, ForgotPasswordOut,
-    ResetPasswordIn, ResetPasswordOut
+    ResetPasswordIn, ResetPasswordOut,
+    ChangePasswordSchema
 )
 from .security import (
     hash_password,
@@ -234,6 +235,19 @@ def reset_password(data: ResetPasswordIn, db: Session = Depends(get_db)):
 
     return ResetPasswordOut(ok=True, message="Mot de passe mis à jour. Tu peux te connecter.")
 
+@router.post("/password/change")
+def change_password(
+    data: ChangePasswordSchema,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not verify_password(data.old_password, current_user.password_hash):
+        raise HTTPException(status_code=400, detail="Old password incorrect")
+
+    current_user.password_hash = hash_password(data.new_password)
+    db.commit()
+
+    return {"ok": True, "message": "Password updated successfully"}
 
 # -------------------------------------------------
 # LOGIN
