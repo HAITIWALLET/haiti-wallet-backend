@@ -25,18 +25,21 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 
 def create_access_token(subject: str) -> str:
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode = {"sub": subject, "exp": expire}
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    now = datetime.utcnow()
+    payload = {
+        "sub": subject,
+        "iat": now,
+        "exp": now + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+    }
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def decode_token(token: str) -> str:
+def decode_token(token: str) -> dict:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        sub = payload.get("sub")
-        if not sub:
+        if "sub" not in payload:
             raise HTTPException(status_code=401, detail="Token invalide")
-        return sub
+        return payload
     except JWTError:
         raise HTTPException(status_code=401, detail="Token invalide")
 
@@ -45,10 +48,23 @@ def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
 ) -> User:
-    email = decode_token(token)
+    payload = decode_token(token)
+
+    email = payload.get("sub")
+    token_iat = payload.get("iat")
+
     user = db.query(User).filter(User.email == email).first()
     if not user:
         raise HTTPException(status_code=401, detail="Utilisateur introuvable")
+
+    # 🔐 Sécurité avancée : invalider les anciens tokens après changement de mot de passe
+    if user.password_changed_at and token_iat:
+        if token_iat < user.password_changed_at:
+            raise HTTPException(
+                status_code=401,
+                detail="Token expiré suite au changement de mot de passe"
+            )
+
     return user
 
 
