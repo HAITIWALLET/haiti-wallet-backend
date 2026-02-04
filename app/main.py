@@ -1,5 +1,6 @@
 # app/main.py
 from pathlib import Path
+import os
 
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
@@ -38,36 +39,44 @@ from .security import hash_password
 @app.on_event("startup")
 def seed_superadmin():
     db: Session = SessionLocal()
+
     try:
         email = "admin@haiti.com"
 
-        # ✅ Important: si la DB est en retard (colonnes manquantes), on ne bloque pas le démarrage
         try:
             existing = db.query(User).filter(User.email == email).first()
         except OperationalError as e:
-            print("⚠️ DB pas prête / colonnes manquantes (migration requise). Seed ignoré.")
-            print("   Détail:", str(e))
+            print("⚠️ DB pas prête (migration requise)")
+            print("Détail:", str(e))
             return
 
-        if not existing:
-            # ✅ créer superadmin avec les champs minimaux sûrs
-            u = User(
-                email=email,
-                password_hash=hash_password("1234"),  # change après
-                role="superadmin",
-            )
+        if existing:
+            return
 
-            # ✅ si ton modèle User contient d'autres champs (ref_code, phone, etc.)
-            # on ne les force PAS ici pour ne pas casser (ils seront gérés par /auth/register ou /auth/phone/verify_register)
+        # 🔐 mot de passe initial depuis l'environnement
+        admin_password = os.getenv("ADMIN_INITIAL_PASSWORD")
 
-            db.add(u)
-            db.commit()
-            db.refresh(u)
+        if not admin_password:
+            raise RuntimeError("ADMIN_INITIAL_PASSWORD not set")
 
-            # wallet auto
-            db.add(Wallet(user_id=u.id, htg=0.0, usd=0.0))
-            db.commit()
-            print("✅ Superadmin créé:", email, "pass=admin1234")
+        password_hash = hash_password(admin_password)
+
+        u = User(
+            email=email,
+            password_hash=password_hash,
+            role="superadmin"
+        )
+
+        db.add(u)
+        db.commit()
+        db.refresh(u)
+
+        # wallet auto
+        db.add(Wallet(user_id=u.id, htg=0.0, usd=0.0))
+        db.commit()
+
+        print("✅ Superadmin créé:", email)
+
     finally:
         db.close()
 
