@@ -22,8 +22,52 @@ from .security import (
     get_current_user,
 )
 
+# ============================
+# LOGIN RATE LIMIT (SAFE)
+# ============================
+
+LOGIN_ATTEMPTS = {}  
+MAX_ATTEMPTS = 5
+BLOCK_MINUTES = 10
+
+def check_login_rate_limit(key: str):
+    now = datetime.utcnow()
+
+    data = LOGIN_ATTEMPTS.get(key)
+
+    if not data:
+        LOGIN_ATTEMPTS[key] = {
+            "count": 1,
+            "blocked_until": None
+        }
+        return
+
+    # si bloqué
+    if data["blocked_until"] and now < data["blocked_until"]:
+        raise HTTPException(
+            status_code=429,
+            detail="Trop de tentatives. Réessaie plus tard."
+        )
+
+    data["count"] += 1
+
+    if data["count"] >= MAX_ATTEMPTS:
+        data["blocked_until"] = now + timedelta(minutes=BLOCK_MINUTES)
+        data["count"] = 0
+        raise HTTPException(
+            status_code=429,
+            detail="Compte temporairement bloqué."
+        )
+
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+def validate_password(pwd: str):
+    if len(pwd) < 8:
+        raise HTTPException(400, "Mot de passe trop court")
+    if not any(c.isdigit() for c in pwd):
+        raise HTTPException(400, "Mot de passe doit contenir un chiffre")
+    if not any(c.isalpha() for c in pwd):
+        raise HTTPException(400, "Mot de passe doit contenir une lettre")
 
 # -------------------------------------------------
 # Helper génération code parrainage UNIQUE
@@ -232,6 +276,12 @@ def reset_password(data: ResetPasswordIn, db: Session = Depends(get_db)):
     user.password_hash = hash_password(new_password)
     pr.used = True
     db.commit()
+    
+    user.password_hash = hash_password(new_password)
+    user.password_changed_at = datetime.utcnow()
+    pr.used = True
+    db.commit()
+
 
     return ResetPasswordOut(ok=True, message="Mot de passe mis à jour. Tu peux te connecter.")
 
@@ -245,6 +295,7 @@ def change_password(
         raise HTTPException(status_code=400, detail="Old password incorrect")
 
     current_user.password_hash = hash_password(data.new_password)
+    current_user.password_changed_at = datetime.utcnow()
     db.commit()
 
     return {"ok": True, "message": "Password updated successfully"}
@@ -257,8 +308,12 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
     email = form.username.lower().strip()
     user = db.query(User).filter(User.email == email).first()
 
-    if not user or not verify_password(form.password, user.password_hash):
-        raise HTTPException(status_code=401, detail="Email ou mot de passe invalide")
+    key = f"{form.username}"
+    check_login_rate_limit(key)
+
+    if not verify_password(form.password, user.password_hash):
+     check_login_rate_limit(key)
+    raise HTTPException(status_code=401, detail="Email ou mot de passe incorrect")
 
     token = create_access_token(subject=user.email)
     return TokenOut(access_token=token)
