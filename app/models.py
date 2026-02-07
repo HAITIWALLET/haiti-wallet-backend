@@ -11,9 +11,6 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
-
-    login_attempts = Column(Integer, default=0)
-    blocked_until = Column(DateTime, nullable=True)
     role = Column(String, default="user")
     status = Column(String, default="active")
 # active | suspended | banned
