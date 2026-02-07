@@ -24,45 +24,7 @@ from .security import (
     get_current_user,
 )
 
-# ============================
-# LOGIN RATE LIMIT (SAFE)
-# ============================
-
-LOGIN_ATTEMPTS = {}  
-MAX_ATTEMPTS = 5
-BLOCK_MINUTES = 10
-
-def check_login_rate_limit(key: str):
-    if key.endswith("@haiti.com"):
-        return
-    now = datetime.utcnow()
-
-    data = LOGIN_ATTEMPTS.get(key)
-
-    if not data:
-        LOGIN_ATTEMPTS[key] = {
-            "count": 1,
-            "blocked_until": None
-        }
-        return
-
-    # si bloqué
-    if data["blocked_until"] and now < data["blocked_until"]:
-        raise HTTPException(
-            status_code=429,
-            detail="Trop de tentatives. Réessaie plus tard."
-        )
-
-    data["count"] += 1
-
-    if data["count"] >= MAX_ATTEMPTS:
-        data["blocked_until"] = now + timedelta(minutes=BLOCK_MINUTES)
-        data["count"] = 0
-        raise HTTPException(
-            status_code=429,
-            detail="Compte temporairement bloqué."
-        )
-
+ 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 def validate_password(pwd: str):
@@ -324,12 +286,10 @@ def login(
         )
 
     if user.role != "superadmin":
-        check_login_rate_limit(key)
 
-    if not verify_password(form.password, user.password_hash):
+     if not verify_password(form.password, user.password_hash):
         if user.role != "superadmin":
-            check_login_rate_limit(key)
-        raise HTTPException(
+         raise HTTPException(
             status_code=401,
             detail="Email ou mot de passe incorrect"
         )
