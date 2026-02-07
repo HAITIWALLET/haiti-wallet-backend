@@ -3,7 +3,7 @@ from fastapi import Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import OperationalError
-from .models_audit import AuditLog
+from app.models_audit import AuditLog
 from datetime import datetime, timedelta
 import string
 import secrets
@@ -314,39 +314,44 @@ def login(
     form: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ):
-    email = form.username.lower().strip()
-    user = db.query(User).filter(User.email == email).first()
+    email = form.username.strip().lower()
+
+    user = (
+        db.query(User)
+        .filter(User.email == email)
+        .one_or_none()
+    )
 
     key = f"login:{email}"
 
-    # ✅ Rate limit UNIQUEMENT si user existe ET n'est PAS superadmin
-    if user and user.role != "superadmin":
-        check_login_rate_limit(key)
-
-    # ❌ Email inexistant OU mauvais mot de passe
+    # ❌ UTILISATEUR INEXISTANT
     if not user:
-     raise HTTPException(
-        status_code=401,
-        detail="Email ou mot de passe incorrect",
-    )
+        raise HTTPException(
+            status_code=401,
+            detail="Email ou mot de passe incorrect"
+        )
 
-    if not verify_password(form.password, user.password_hash):
-     if user.role != "superadmin":
+    # ✅ RATE LIMIT seulement si user existe et n’est PAS superadmin
+    if user.role != "superadmin":
         check_login_rate_limit(key)
-    raise HTTPException(
-        status_code=401,
-        detail="Email ou mot de passe incorrect",
-    )
 
+    # ❌ MAUVAIS MOT DE PASSE
+    if not verify_password(form.password, user.password_hash):
+        if user.role != "superadmin":
+            check_login_rate_limit(key)
+        raise HTTPException(
+            status_code=401,
+            detail="Email ou mot de passe incorrect"
+        )
 
-    # ❌ Blocage compte (SAUF superadmin)
+    # ❌ COMPTE BLOQUÉ
     if user.role != "superadmin" and user.status != "active":
         raise HTTPException(
             status_code=403,
-            detail="Compte suspendu ou banni",
+            detail="Compte suspendu ou banni"
         )
 
-    # ✅ Token OK
+    # ✅ TOKEN OK
     token = create_access_token(subject=user.email)
 
     db.add(AuditLog(
