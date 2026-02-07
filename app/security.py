@@ -53,9 +53,14 @@ def get_current_user(
     email = payload.get("sub")
     token_iat = payload.get("iat")
 
+    iat = payload.get("iat")
+    if not iat:
+     raise HTTPException(status_code=401, detail="Token invalide")
+
     user = db.query(User).filter(User.email == email).first()
     if not user:
         raise HTTPException(status_code=401, detail="Utilisateur introuvable")
+    
 
     # 🔐 Sécurité avancée : invalider les anciens tokens après changement de mot de passe
     if user.password_changed_at and token_iat:
