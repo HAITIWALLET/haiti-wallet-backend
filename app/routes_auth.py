@@ -340,12 +340,7 @@ def login(
             status_code=401,
             detail="Email ou mot de passe incorrect"
         )
-
-    if user.role != "superadmin" and user.status != "active":
-        raise HTTPException(
-            status_code=403,
-            detail="Compte suspendu ou banni"
-        )
+    
 
     token = create_access_token(subject=user.email)
 
