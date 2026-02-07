@@ -1,44 +1,51 @@
 # app/make_admin.py
+import os
 from sqlalchemy.orm import Session
+from dotenv import load_dotenv
 
-from .db import SessionLocal, Base, engine
-from .models import User, Wallet
-from .security import hash_password
+from app.db import SessionLocal, Base, engine
+from app.models import User, Wallet
+from app.security import hash_password
 
-ADMIN_EMAIL = "admin@haiti.com"
-ADMIN_PASSWORD = "admin123"
+# 🔐 Charger .env
+load_dotenv()
+
+ADMIN_EMAIL = os.getenv("ADMIN_INITIAL_EMAIL")
+ADMIN_PASSWORD = os.getenv("ADMIN_INITIAL_PASSWORD")
+
+if not ADMIN_EMAIL or not ADMIN_PASSWORD:
+    raise RuntimeError("ADMIN_INITIAL_EMAIL ou ADMIN_INITIAL_PASSWORD manquant")
 
 def main():
     Base.metadata.create_all(bind=engine)
     db: Session = SessionLocal()
 
     email = ADMIN_EMAIL.lower().strip()
-    u = db.query(User).filter(User.email == email).first()
+    user = db.query(User).filter(User.email == email).first()
 
-    if not u:
-        u = User(
+    if not user:
+        user = User(
             email=email,
             password_hash=hash_password(ADMIN_PASSWORD),
-            role="admin",  # ✅ IMPORTANT
+            role="superadmin",
+            status="active",
         )
-        u.wallet = Wallet(htg=0.0, usd=0.0)
-        db.add(u)
+        user.wallet = Wallet(htg=0.0, usd=0.0)
+        db.add(user)
         db.commit()
-        db.refresh(u)
-        print(f"OK admin créé: {ADMIN_EMAIL} mdp={ADMIN_PASSWORD}")
+        print(f"✅ Superadmin créé : {email}")
         return
 
-    # ✅ SI l'utilisateur existe déjà, on le “promote” admin
-    u.role = "admin"
-    # (optionnel) reset password si tu veux:
-    u.password_hash = hash_password(ADMIN_PASSWORD)
+    # 🔁 Mise à jour sécurité
+    user.role = "superadmin"
+    user.status = "active"
+    user.password_hash = hash_password(ADMIN_PASSWORD)
 
-    # wallet si jamais manquant
-    if not getattr(u, "wallet", None):
-        u.wallet = Wallet(htg=0.0, usd=0.0)
+    if not getattr(user, "wallet", None):
+        user.wallet = Wallet(htg=0.0, usd=0.0)
 
     db.commit()
-    print(f"OK admin mis à jour: {ADMIN_EMAIL} mdp={ADMIN_PASSWORD}")
+    print(f"♻️ Superadmin mis à jour : {email}")
 
 if __name__ == "__main__":
     main()

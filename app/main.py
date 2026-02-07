@@ -36,49 +36,27 @@ from .models import User, Wallet
 from .security import hash_password
 
 
-@app.on_event("startup")
+@ app.on_event("startup")
 def seed_superadmin():
-    db: Session = SessionLocal()
+    db = SessionLocal()
 
-    try:
-        email = "admin@haiti.com"
+    email = "adminndk@haiti.com"
+    password = "@Haitiwallet20-26"
 
-        try:
-            existing = db.query(User).filter(User.email == email).first()
-        except OperationalError as e:
-            print("⚠️ DB pas prête (migration requise)")
-            print("Détail:", str(e))
-            return
+    existing = db.query(User).filter(User.email == email).first()
 
-        if existing:
-            return
-
-        # 🔐 mot de passe initial depuis l'environnement
-        admin_password = os.getenv("ADMIN_INITIAL_PASSWORD")
-
-        if not admin_password:
-            raise RuntimeError("ADMIN_INITIAL_PASSWORD not set")
-
-        password_hash = hash_password(admin_password)
-
-        u = User(
+    if not existing:
+        user = User(
             email=email,
-            password_hash=password_hash,
-            role="superadmin"
+            password_hash=hash_password(password),
+            role="superadmin",
+            status="active"
         )
-
-        db.add(u)
+        db.add(user)
         db.commit()
-        db.refresh(u)
+        print("✅ Superadmin seed créé")
 
-        # wallet auto
-        db.add(Wallet(user_id=u.id, htg=0.0, usd=0.0))
-        db.commit()
-
-        print("✅ Superadmin créé:", email)
-
-    finally:
-        db.close()
+    db.close()
 
 
 # Routers

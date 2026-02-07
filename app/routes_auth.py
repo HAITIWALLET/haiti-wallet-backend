@@ -278,12 +278,6 @@ def reset_password(data: ResetPasswordIn, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Utilisateur introuvable.")
 
     user.password_hash = hash_password(new_password)
-    pr.used = True
-    db.commit()
-    
-    user.password_hash = hash_password(new_password)
-    user.password_changed_at = datetime.utcnow()
-    pr.used = True
     db.commit()
 
 
@@ -299,7 +293,6 @@ def change_password(
         raise HTTPException(status_code=400, detail="Old password incorrect")
 
     current_user.password_hash = hash_password(data.new_password)
-    current_user.password_changed_at = datetime.utcnow()
     db.commit()
 
     return {"ok": True, "message": "Password updated successfully"}

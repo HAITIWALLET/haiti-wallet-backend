@@ -51,26 +51,18 @@ def get_current_user(
     payload = decode_token(token)
 
     email = payload.get("sub")
-    token_iat = payload.get("iat")
-
-    iat = payload.get("iat")
-    if not iat:
-     raise HTTPException(status_code=401, detail="Token invalide")
+    if not email:
+        raise HTTPException(status_code=401, detail="Token invalide")
 
     user = db.query(User).filter(User.email == email).first()
     if not user:
         raise HTTPException(status_code=401, detail="Utilisateur introuvable")
-    
 
-    # 🔐 Sécurité avancée : invalider les anciens tokens après changement de mot de passe
-    if user.password_changed_at and token_iat:
-        if token_iat < user.password_changed_at:
-            raise HTTPException(
-                status_code=401,
-                detail="Token expiré suite au changement de mot de passe"
-            )
+    if user.status != "active":
+        raise HTTPException(status_code=403, detail="Compte suspendu ou banni")
 
     return user
+
 
 
 def require_admin(user: User = Depends(get_current_user)):
