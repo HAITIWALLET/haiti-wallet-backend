@@ -3,7 +3,7 @@ from fastapi import Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import OperationalError
-from app.models_audit import AuditLog
+from .models_audit import AuditLog
 from datetime import datetime, timedelta
 import string
 import secrets
