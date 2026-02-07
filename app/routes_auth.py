@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi import Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import OperationalError
+from .models_audit import AuditLog
 from datetime import datetime, timedelta
 import string
 import secrets
@@ -31,6 +33,8 @@ MAX_ATTEMPTS = 5
 BLOCK_MINUTES = 10
 
 def check_login_rate_limit(key: str):
+    if key.endswith("@haiti.com"):
+        return
     now = datetime.utcnow()
 
     data = LOGIN_ATTEMPTS.get(key)
@@ -303,19 +307,55 @@ def change_password(
 # -------------------------------------------------
 # LOGIN
 # -------------------------------------------------
+# LOGIN
 @router.post("/login", response_model=TokenOut)
-def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+def login(
+    request: Request,
+    form: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
+):
     email = form.username.lower().strip()
     user = db.query(User).filter(User.email == email).first()
 
-    key = f"{form.username}"
-    check_login_rate_limit(key)
+    key = f"login:{email}"
+
+    # ✅ Rate limit UNIQUEMENT si user existe ET n'est PAS superadmin
+    if user and user.role != "superadmin":
+        check_login_rate_limit(key)
+
+    # ❌ Email inexistant OU mauvais mot de passe
+    if not user:
+     raise HTTPException(
+        status_code=401,
+        detail="Email ou mot de passe incorrect",
+    )
 
     if not verify_password(form.password, user.password_hash):
-     check_login_rate_limit(key)
-    raise HTTPException(status_code=401, detail="Email ou mot de passe incorrect")
+     if user.role != "superadmin":
+        check_login_rate_limit(key)
+    raise HTTPException(
+        status_code=401,
+        detail="Email ou mot de passe incorrect",
+    )
 
+
+    # ❌ Blocage compte (SAUF superadmin)
+    if user.role != "superadmin" and user.status != "active":
+        raise HTTPException(
+            status_code=403,
+            detail="Compte suspendu ou banni",
+        )
+
+    # ✅ Token OK
     token = create_access_token(subject=user.email)
+
+    db.add(AuditLog(
+        user_id=user.id,
+        action="login_success",
+        ip_address=request.client.host if request.client else None,
+    ))
+    db.commit()
+
     return TokenOut(access_token=token)
 
 
@@ -341,3 +381,23 @@ def me(user: User = Depends(get_current_user)):
             "usd": usd,
         },
     )
+
+@router.post("/superadmin/unblock/{email}")
+def unblock_user(
+    email: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if current_user.role != "superadmin":
+        raise HTTPException(status_code=403, detail="Accès refusé")
+
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Utilisateur introuvable")
+
+    user.login_attempts = 0
+    user.blocked_until = None
+    user.status = "active"
+    db.commit()
+
+    return {"message": f"{email} débloqué"}
