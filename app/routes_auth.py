@@ -324,18 +324,15 @@ def login(
 
     key = f"login:{email}"
 
-    # ❌ UTILISATEUR INEXISTANT
     if not user:
         raise HTTPException(
             status_code=401,
             detail="Email ou mot de passe incorrect"
         )
 
-    # ✅ RATE LIMIT seulement si user existe et n’est PAS superadmin
     if user.role != "superadmin":
         check_login_rate_limit(key)
 
-    # ❌ MAUVAIS MOT DE PASSE
     if not verify_password(form.password, user.password_hash):
         if user.role != "superadmin":
             check_login_rate_limit(key)
@@ -344,14 +341,12 @@ def login(
             detail="Email ou mot de passe incorrect"
         )
 
-    # ❌ COMPTE BLOQUÉ
     if user.role != "superadmin" and user.status != "active":
         raise HTTPException(
             status_code=403,
             detail="Compte suspendu ou banni"
         )
 
-    # ✅ TOKEN OK
     token = create_access_token(subject=user.email)
 
     db.add(AuditLog(
