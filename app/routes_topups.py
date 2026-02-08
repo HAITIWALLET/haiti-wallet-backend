@@ -131,6 +131,19 @@ def decide_request(
     req = db.query(TopupRequest).filter(TopupRequest.id == req_id).first()
     if not req:
         raise HTTPException(status_code=404, detail="Demande introuvable")
+    
+    # 🚨 RÈGLE MÉTIER – auto-approbation
+
+# Cas ADMIN : ne peut PAS approuver sa propre recharge
+    if admin.role == "admin" and req.user_id == admin.id:
+        raise HTTPException(
+        status_code=403,
+        detail="Un admin ne peut pas approuver sa propre recharge"
+    )
+
+# Cas SUPERADMIN : autorisé à tout (y compris lui-même)
+# → aucune restriction
+
     if req.status != "PENDING":
         raise HTTPException(status_code=400, detail="Déjà traitée")
 
