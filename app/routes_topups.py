@@ -147,18 +147,22 @@ def decide_request(
     req.admin_note = data.admin_note
     req.decided_at = datetime.utcnow()
 
-    if req.user_id == admin.id and admin.role == "superadmin":
-      pass
-
     if status == "APPROVED":
-        fee = float(getattr(req, "fee_amount", 0.0))
-        net = float(getattr(req, "net_amount", float(req.amount)))
+     fee = float(getattr(req, 'fee_amount', 0.0))
+     net = float(getattr(req, 'net_amount', float(req.amount)))
 
-        # créditer wallet (NET)
-        if req.currency == "htg":
-            u.wallet.htg = float(u.wallet.htg) + net
-        else:
-            u.wallet.usd = float(u.wallet.usd) + net
+    if req.currency == "htg":
+        u.wallet.htg = float(u.wallet.htg) + net
+    else:
+        u.wallet.usd = float(u.wallet.usd) + net
+
+        db.add(req)
+        db.add(u)
+        db.commit()
+        db.refresh(req)
+
+        return {"ok": True, "status": req.status}
+
 
         # -------------------------
         # PARRAINAGE: bonus 500 HTG une seule fois
