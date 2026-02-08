@@ -15,8 +15,8 @@ def admin_adjust_wallet(
     db: Session = Depends(get_db),
     admin: User = Depends(get_current_user),
 ):
-    if admin.role != "admin":
-        raise HTTPException(status_code=403, detail="Admin seulement")
+    if admin.role not in ("admin", "superadmin"):
+        raise HTTPException(status_code=403, detail="Admin requis")
 
     email = (data.email or "").strip().lower()
     if not email:
