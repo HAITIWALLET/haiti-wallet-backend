@@ -12,16 +12,9 @@ router = APIRouter(prefix="/topups", tags=["topups"])
 
 
 # -------------------------
-# FEES (fixed, same numbers for HTG and USD)
+# FEES (fixed)
 # -------------------------
 def calc_fee(amount: float) -> float:
-    """
-    Barème (identique HTG et USD, sans conversion):
-    0–20  -> 1.50
-    21–50 -> 3.00
-    51–70 -> 5.00
-    71+   -> 7.50
-    """
     a = float(amount or 0)
     if a <= 20:
         return 1.50
@@ -38,7 +31,7 @@ def _to_out(req: TopupRequest, user_email: str) -> TopupRequestOut:
         user_id=req.user_id,
         user_email=user_email,
         amount=float(req.amount),
-        fee_amount=float(req.fee_amount or 0.0),
+        fee_amount=float(req.fee_amount or 0),
         net_amount=float(req.net_amount or req.amount),
         currency=req.currency,
         method=req.method,
@@ -53,7 +46,7 @@ def _to_out(req: TopupRequest, user_email: str) -> TopupRequestOut:
 
 
 # -------------------------
-# CREATE TOPUP REQUEST
+# CREATE REQUEST
 # -------------------------
 @router.post("/request", response_model=TopupRequestOut)
 def create_request(
@@ -63,10 +56,7 @@ def create_request(
 ):
     fee_check = calc_fee(float(data.amount))
     if float(data.amount) <= fee_check:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Montant trop faible. Frais = {fee_check} {data.currency}.",
-        )
+        raise HTTPException(400, "Montant trop faible")
 
     fee = compute_fee(float(data.amount))
     net = net_amount(float(data.amount))
@@ -82,9 +72,7 @@ def create_request(
         proof_url=data.proof_url,
         note=data.note,
         status="PENDING",
-        admin_note=None,
         created_at=datetime.utcnow(),
-        decided_at=None,
     )
 
     db.add(req)
@@ -111,7 +99,7 @@ def my_requests(
 
 
 # -------------------------
-# ADMIN – PENDING REQUESTS
+# PENDING (ADMIN)
 # -------------------------
 @router.get("/pending", response_model=list[TopupRequestOut])
 def pending_requests(
@@ -129,7 +117,7 @@ def pending_requests(
 
 
 # -------------------------
-# DECIDE REQUEST
+# DECIDE REQUEST (FIXED)
 # -------------------------
 @router.post("/{req_id}/decide")
 def decide_request(
@@ -140,76 +128,47 @@ def decide_request(
 ):
     req = db.query(TopupRequest).filter(TopupRequest.id == req_id).first()
     if not req:
-        raise HTTPException(status_code=404, detail="Demande introuvable")
+        raise HTTPException(404, "Demande introuvable")
 
     # ❌ admin ne peut PAS approuver sa propre recharge
-    # ✅ superadmin peut TOUT faire
     if admin.role == "admin" and req.user_id == admin.id:
-        raise HTTPException(
-            status_code=403,
-            detail="Un admin ne peut pas approuver sa propre recharge",
-        )
+        raise HTTPException(403, "Admin ne peut pas approuver sa propre recharge")
 
     if req.status != "PENDING":
-        raise HTTPException(status_code=400, detail="Demande déjà traitée")
+        raise HTTPException(400, "Déjà traitée")
 
-    decision = (data.decision or "").upper()
+    # 🔥 ICI ÉTAIT LE BUG
+    decision = (data.status or "").upper()
 
-    user = db.query(User).filter(User.id == req.user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="Utilisateur introuvable")
+    if decision not in ("APPROVED", "REJECTED"):
+        raise HTTPException(400, "Décision invalide")
 
-    wallet = db.query(Wallet).filter(Wallet.user_id == user.id).first()
-    if not wallet:
-        raise HTTPException(status_code=500, detail="Wallet introuvable")
+    req.status = decision
+    req.approved_by = admin.id
+    req.decided_at = datetime.utcnow()
 
     if decision == "APPROVED":
-        req.status = "APPROVED"
-        req.approved_by = admin.id
-        req.decided_at = datetime.utcnow()
+        wallet = db.query(Wallet).filter(Wallet.user_id == req.user_id).first()
+        if not wallet:
+            raise HTTPException(500, "Wallet introuvable")
 
-        if req.currency == "HTG":
+        if req.currency == "htg":
             wallet.htg += req.net_amount
-        elif req.currency == "USD":
+        elif req.currency == "usd":
             wallet.usd += req.net_amount
-        else:
-            raise HTTPException(status_code=400, detail="Devise invalide")
 
-        tx_topup = Transaction(
-            user_id=user.id,
+        tx = Transaction(
+            user_id=req.user_id,
             type="topup",
             currency=req.currency,
             amount=req.net_amount,
-            note=f"Topup approuvé via {req.method} ({req.reference})",
+            note=f"Topup approuvé via {req.method}",
             direction="manual_topup",
-            rate_used=None,
             created_at=datetime.utcnow(),
         )
-        db.add(tx_topup)
-
-        if req.fee_amount and req.fee_amount > 0:
-            tx_fee = Transaction(
-                user_id=user.id,
-                type="fee",
-                currency=req.currency,
-                amount=req.fee_amount,
-                note="Frais Haiti Wallet",
-                direction="fee",
-                rate_used=None,
-                created_at=datetime.utcnow(),
-            )
-            db.add(tx_fee)
-
-    elif decision == "REJECTED":
-        req.status = "REJECTED"
-        req.approved_by = admin.id
-        req.decided_at = datetime.utcnow()
-
-    else:
-        raise HTTPException(status_code=400, detail="Décision invalide")
+        db.add(tx)
 
     db.commit()
-    db.refresh(req)
 
     return {
         "ok": True,
