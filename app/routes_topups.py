@@ -132,6 +132,16 @@ def decide_request(
     if not req:
         raise HTTPException(status_code=404, detail="Demande introuvable")
     
+    # 🔒 règle d'autorisation
+    if admin.role == "admin" and req.user_id == admin.id:
+        raise HTTPException(
+        status_code=403,
+        detail="Un admin ne peut pas approuver sa propre recharge"
+    )
+
+# ✅ superadmin peut tout faire (même lui-même)
+
+    
     # 🚨 RÈGLE MÉTIER – auto-approbation
 
 # Cas ADMIN : ne peut PAS approuver sa propre recharge
