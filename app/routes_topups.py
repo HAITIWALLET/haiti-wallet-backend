@@ -38,8 +38,8 @@ def _to_out(req: TopupRequest, user_email: str) -> TopupRequestOut:
         user_id=req.user_id,
         user_email=user_email,
         amount=float(req.amount),
-        fee_amount=float(getattr(req, "fee_amount", 0.0)),
-        net_amount=float(getattr(req, "net_amount", float(req.amount))),
+        fee_amount=float(req.fee_amount or 0.0),
+        net_amount=float(req.net_amount or req.amount),
         currency=req.currency,
         method=req.method,
         reference=req.reference,
@@ -74,8 +74,8 @@ def create_request(
     req = TopupRequest(
         user_id=user.id,
         amount=float(data.amount),
-        fee_amount=float(fee),
-        net_amount=float(net),
+        fee_amount=fee,
+        net_amount=net,
         currency=data.currency,
         method=data.method,
         reference=data.reference,
@@ -94,7 +94,7 @@ def create_request(
 
 
 # -------------------------
-# USER REQUESTS
+# MY REQUESTS
 # -------------------------
 @router.get("/mine", response_model=list[TopupRequestOut])
 def my_requests(
@@ -111,7 +111,7 @@ def my_requests(
 
 
 # -------------------------
-# ADMIN PENDING
+# ADMIN – PENDING REQUESTS
 # -------------------------
 @router.get("/pending", response_model=list[TopupRequestOut])
 def pending_requests(
@@ -131,26 +131,23 @@ def pending_requests(
 # -------------------------
 # DECIDE REQUEST
 # -------------------------
-@router.post("/topups/{req_id}/decide")
+@router.post("/{req_id}/decide")
 def decide_request(
     req_id: int,
     data: TopupDecisionIn,
     db: Session = Depends(get_db),
-    admin: User = Depends(get_current_user),
+    admin: User = Depends(require_admin),
 ):
-    # 🔐 role check
-    if admin.role not in ("admin", "superadmin"):
-        raise HTTPException(status_code=403, detail="Admin requis")
-
     req = db.query(TopupRequest).filter(TopupRequest.id == req_id).first()
     if not req:
         raise HTTPException(status_code=404, detail="Demande introuvable")
 
-    # ❌ admin ne peut pas approuver sa propre demande
+    # ❌ admin ne peut PAS approuver sa propre recharge
+    # ✅ superadmin peut TOUT faire
     if admin.role == "admin" and req.user_id == admin.id:
         raise HTTPException(
             status_code=403,
-            detail="Un admin ne peut pas approuver sa propre recharge"
+            detail="Un admin ne peut pas approuver sa propre recharge",
         )
 
     if req.status != "PENDING":
@@ -158,48 +155,44 @@ def decide_request(
 
     decision = (data.decision or "").upper()
 
-    u = db.query(User).filter(User.id == req.user_id).first()
-    if not u:
+    user = db.query(User).filter(User.id == req.user_id).first()
+    if not user:
         raise HTTPException(status_code=404, detail="Utilisateur introuvable")
 
-    wallet = db.query(Wallet).filter(Wallet.user_id == u.id).first()
+    wallet = db.query(Wallet).filter(Wallet.user_id == user.id).first()
     if not wallet:
         raise HTTPException(status_code=500, detail="Wallet introuvable")
-
-    fee = float(req.fee_amount or 0)
-    net = float(req.net_amount or req.amount)
 
     if decision == "APPROVED":
         req.status = "APPROVED"
         req.approved_by = admin.id
-        req.approved_at = datetime.utcnow()
         req.decided_at = datetime.utcnow()
 
         if req.currency == "HTG":
-            wallet.htg += net
+            wallet.htg += req.net_amount
         elif req.currency == "USD":
-            wallet.usd += net
+            wallet.usd += req.net_amount
         else:
             raise HTTPException(status_code=400, detail="Devise invalide")
 
         tx_topup = Transaction(
-            user_id=u.id,
+            user_id=user.id,
             type="topup",
             currency=req.currency,
-            amount=net,
-            note=f"Topup approuvé via {req.method} ref:{req.reference}",
+            amount=req.net_amount,
+            note=f"Topup approuvé via {req.method} ({req.reference})",
             direction="manual_topup",
             rate_used=None,
             created_at=datetime.utcnow(),
         )
         db.add(tx_topup)
 
-        if fee > 0:
+        if req.fee_amount and req.fee_amount > 0:
             tx_fee = Transaction(
-                user_id=u.id,
+                user_id=user.id,
                 type="fee",
                 currency=req.currency,
-                amount=fee,
+                amount=req.fee_amount,
                 note="Frais Haiti Wallet",
                 direction="fee",
                 rate_used=None,
@@ -210,13 +203,10 @@ def decide_request(
     elif decision == "REJECTED":
         req.status = "REJECTED"
         req.approved_by = admin.id
-        req.approved_at = datetime.utcnow()
         req.decided_at = datetime.utcnow()
 
     else:
         raise HTTPException(status_code=400, detail="Décision invalide")
-
-    apply_referral_bonus_one_shot(db, u)
 
     db.commit()
     db.refresh(req)
@@ -226,57 +216,3 @@ def decide_request(
         "status": req.status,
         "approved_by": admin.email,
     }
-
-
-# -------------------------
-# REFERRAL BONUS (ONE SHOT)
-# -------------------------
-def apply_referral_bonus_one_shot(db: Session, referred_user: User):
-    if not referred_user.referred_by_user_id:
-        return
-
-    referrer = (
-        db.query(User)
-        .filter(User.id == referred_user.referred_by_user_id)
-        .first()
-    )
-    if not referrer:
-        return
-
-    if int(getattr(referrer, "referral_bonus_paid", 0) or 0) == 1:
-        return
-
-    children = (
-        db.query(User)
-        .filter(User.referred_by_user_id == referrer.id)
-        .all()
-    )
-    child_ids = [c.id for c in children]
-
-    qualified = (
-        db.query(TopupRequest.user_id)
-        .filter(TopupRequest.user_id.in_(child_ids))
-        .filter(TopupRequest.status == "APPROVED")
-        .filter(TopupRequest.currency == "HTG")
-        .filter(TopupRequest.amount >= 250)
-        .distinct()
-        .count()
-    )
-
-    if qualified < 3:
-        return
-
-    referrer.wallet.htg += 500
-    referrer.referral_bonus_paid = 1
-
-    tx = Transaction(
-        user_id=referrer.id,
-        type="referral_bonus",
-        currency="HTG",
-        amount=500,
-        note="Bonus parrainage: 3 filleuls qualifiés",
-        direction="referral_bonus",
-        rate_used=None,
-        created_at=datetime.utcnow(),
-    )
-    db.add(tx)
