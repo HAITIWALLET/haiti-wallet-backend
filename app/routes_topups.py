@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from .db import get_db
-from .models import TopupRequest, User, Transaction
+from .models import TopupRequest, User, Transaction, Wallet
 from .schemas import TopupRequestIn, TopupRequestOut, TopupDecisionIn
 from .security import get_current_user, require_admin
 from .Services.fees import compute_fee, net_amount
@@ -15,13 +15,6 @@ router = APIRouter(prefix="/topups", tags=["topups"])
 # FEES (fixed, same numbers for HTG and USD)
 # -------------------------
 def calc_fee(amount: float) -> float:
-    """
-    Barème (identique HTG et USD, sans conversion):
-    0–20  -> 1.50
-    21–50 -> 3.00
-    51–70 -> 5.00
-    71+   -> 7.50
-    """
     a = float(amount or 0)
     if a <= 20:
         return 1.50
@@ -58,7 +51,6 @@ def create_request(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    # ✅ validate fee vs amount
     fee_check = calc_fee(float(data.amount))
     if float(data.amount) <= fee_check:
         raise HTTPException(
@@ -66,7 +58,6 @@ def create_request(
             detail=f"Montant trop faible. Frais = {fee_check} {data.currency}.",
         )
 
-    # Crée une demande PENDING (safe, manuel)
     fee = compute_fee(float(data.amount))
     net = net_amount(float(data.amount))
 
@@ -121,7 +112,7 @@ def pending_requests(
     return [_to_out(r, email) for (r, email) in rows]
 
 
-@router.post("/{req_id}/decide", response_model=TopupRequestOut)
+@router.post("/{req_id}/decide")
 def decide_request(
     req_id: int,
     data: TopupDecisionIn,
@@ -131,121 +122,54 @@ def decide_request(
     req = db.query(TopupRequest).filter(TopupRequest.id == req_id).first()
     if not req:
         raise HTTPException(status_code=404, detail="Demande introuvable")
-    
-    # 🔒 règle d'autorisation
+
+    # 🔒 ADMIN ne peut PAS approuver sa propre demande
     if admin.role == "admin" and req.user_id == admin.id:
         raise HTTPException(
-        status_code=403,
-        detail="Un admin ne peut pas approuver sa propre recharge"
-    )
-
-# ✅ superadmin peut tout faire (même lui-même)
-
-    
-    # 🚨 RÈGLE MÉTIER – auto-approbation
-
-# Cas ADMIN : ne peut PAS approuver sa propre recharge
-    if admin.role == "admin" and req.user_id == admin.id:
-        raise HTTPException(
-        status_code=403,
-        detail="Un admin ne peut pas approuver sa propre recharge"
-    )
-
-# Cas SUPERADMIN : autorisé à tout (y compris lui-même)
-# → aucune restriction
+            status_code=403,
+            detail="Un admin ne peut pas approuver sa propre demande"
+        )
 
     if req.status != "PENDING":
-        raise HTTPException(status_code=400, detail="Déjà traitée")
+        raise HTTPException(status_code=400, detail="Demande déjà traitée")
+
+    decision = (data.decision or "").upper()
 
     u = db.query(User).filter(User.id == req.user_id).first()
     if not u:
         raise HTTPException(status_code=404, detail="Utilisateur introuvable")
 
-    status = (data.status or "").upper()
-    if status not in ("APPROVED", "REJECTED"):
-        raise HTTPException(status_code=400, detail="Statut invalide")
+    wallet = db.query(Wallet).filter(Wallet.user_id == u.id).first()
+    if not wallet:
+        raise HTTPException(status_code=500, detail="Wallet introuvable")
 
-    # Applique décision
-    req.status = status
-    req.admin_note = data.admin_note
-    req.decided_at = datetime.utcnow()
+    fee = float(req.fee_amount or 0)
+    net = float(req.net_amount or req.amount)
 
-    if status == "APPROVED":
-     fee = float(getattr(req, 'fee_amount', 0.0))
-     net = float(getattr(req, 'net_amount', float(req.amount)))
+    if decision == "APPROVED":
+        req.status = "APPROVED"
+        req.decided_at = datetime.utcnow()
+        req.admin_note = data.admin_note
 
-    if req.currency == "htg":
-        u.wallet.htg = float(u.wallet.htg) + net
-    else:
-        u.wallet.usd = float(u.wallet.usd) + net
+        if req.currency.lower() == "htg":
+            wallet.htg += net
+        elif req.currency.lower() == "usd":
+            wallet.usd += net
+        else:
+            raise HTTPException(status_code=400, detail="Devise invalide")
 
-        db.add(req)
-        db.add(u)
-        db.commit()
-        db.refresh(req)
-
-        return {"ok": True, "status": req.status}
-
-
-        # -------------------------
-        # PARRAINAGE: bonus 500 HTG une seule fois
-        # Conditions:
-        # - l'utilisateur a un referred_by
-        # - recharge HTG >= 250 (ou USD >= équivalent si tu veux; sinon HTG seulement)
-        # - pas encore récompensé (ref_rewarded == False)
-        # - le parrain doit exister
-        # - "3 inscrits" : on compte les success_count
-        # -------------------------
-        try:
-            if getattr(u, "referred_by", None) and not getattr(u, "ref_rewarded", False):
-                # on impose condition HTG min 250 (clair)
-                if req.currency == "htg" and float(req.amount) >= 250:
-                    referrer = db.query(User).filter(User.ref_code == u.referred_by).first()
-                    if referrer:
-                        # incrémenter succès parrain
-                        referrer.ref_success_count = int(getattr(referrer, "ref_success_count", 0)) + 1
-
-                        # si atteint 3 -> donner 500 HTG et marquer ref_rewarded pour CE user (ou pour le referrer)
-                        # Ici: tu veux 500 HTG au parrain après 3 succès.
-                        if referrer.ref_success_count >= 3:
-                            referrer.wallet.htg += 500.0
-
-                            tx_bonus = Transaction(
-                                user_id=referrer.id,
-                                type="referral_bonus",
-                                currency="htg",
-                                amount=500.0,
-                                note="Bonus parrainage: 3 filleuls + recharge min 250 HTG",
-                                direction="referral_bonus",
-                                rate_used=None,
-                                created_at=datetime.utcnow(),
-                            )
-                            db.add(tx_bonus)
-
-                        # marquer ce filleul comme “a servi” (une seule fois)
-                        u.ref_rewarded = True
-
-                        db.add(referrer)
-                        db.add(u)
-                        db.commit()
-        except Exception:
-            # en dev: tu peux print/log l'erreur
-            pass
-
-        # Transaction TOPUP (NET)
         tx_topup = Transaction(
             user_id=u.id,
             type="topup",
             currency=req.currency,
             amount=net,
-            note=f"Topup approuvé (net) via {req.method} ref:{req.reference}",
+            note=f"Recharge approuvée ({req.method}) ref:{req.reference}",
             direction="manual_topup",
             rate_used=None,
             created_at=datetime.utcnow(),
         )
         db.add(tx_topup)
 
-        # Transaction FEES (audit)
         if fee > 0:
             tx_fee = Transaction(
                 user_id=u.id,
@@ -259,20 +183,27 @@ def decide_request(
             )
             db.add(tx_fee)
 
-    apply_referral_bonus_one_shot(db, u)
-    db.commit()
+        apply_referral_bonus_one_shot(db, u)
 
+    elif decision == "REJECTED":
+        req.status = "REJECTED"
+        req.decided_at = datetime.utcnow()
+        req.admin_note = data.admin_note
 
-    # ✅ IMPORTANT: commit + refresh + return (sinon 500)
+    else:
+        raise HTTPException(status_code=400, detail="Décision invalide")
+
     db.commit()
     db.refresh(req)
 
-    # récupère email pour la réponse
-    email = u.email if u else ""
-    return _to_out(req, email)
+    return {
+        "ok": True,
+        "status": req.status,
+        "approved_by": admin.email,
+    }
+
 
 def apply_referral_bonus_one_shot(db: Session, referred_user: User):
-    # doit avoir un parrain
     if not referred_user.referred_by_user_id:
         return
 
@@ -280,18 +211,16 @@ def apply_referral_bonus_one_shot(db: Session, referred_user: User):
     if not referrer:
         return
 
-    # ✅ déjà payé -> stop
     if int(getattr(referrer, "referral_bonus_paid", 0) or 0) == 1:
         return
 
-    # récupérer tous les filleuls
     children = db.query(User).filter(User.referred_by_user_id == referrer.id).all()
     if not children:
         return
+
     child_ids = [c.id for c in children]
 
-    # compter les filleuls qualifiés
-    qualified_child_ids = (
+    qualified = (
         db.query(TopupRequest.user_id)
         .filter(TopupRequest.user_id.in_(child_ids))
         .filter(TopupRequest.status == "APPROVED")
@@ -300,12 +229,10 @@ def apply_referral_bonus_one_shot(db: Session, referred_user: User):
         .distinct()
         .all()
     )
-    qualified_count = len(qualified_child_ids)
 
-    if qualified_count < 3:
+    if len(qualified) < 3:
         return
 
-    # ✅ payer une seule fois
     bonus = 500.0
     referrer.wallet.htg += bonus
     referrer.referral_bonus_paid = 1
@@ -315,7 +242,7 @@ def apply_referral_bonus_one_shot(db: Session, referred_user: User):
         type="referral_bonus",
         currency="htg",
         amount=bonus,
-        note="Bonus parrainage: 3 filleuls qualifiés (+500 HTG) — payé une fois",
+        note="Bonus parrainage: 3 filleuls qualifiés (+500 HTG)",
         direction="referral_bonus",
         rate_used=None,
         created_at=datetime.utcnow(),
