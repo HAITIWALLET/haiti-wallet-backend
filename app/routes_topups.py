@@ -147,6 +147,10 @@ def decide_request(
     req.admin_note = data.admin_note
     req.decided_at = datetime.utcnow()
 
+    # Autoriser superadmin à approuver sa propre recharge
+    if req.user_id == admin.id and admin.role == "superadmin":
+      pass
+
     if status == "APPROVED":
         fee = float(getattr(req, "fee_amount", 0.0))
         net = float(getattr(req, "net_amount", float(req.amount)))
