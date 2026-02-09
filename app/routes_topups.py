@@ -138,7 +138,7 @@ def decide_request(
         raise HTTPException(400, "Déjà traitée")
 
     # 🔥 ICI ÉTAIT LE BUG
-    decision = (data.status or "").upper()
+    decision = (data.decision or "").upper()
 
     if decision not in ("APPROVED", "REJECTED"):
         raise HTTPException(400, "Décision invalide")
@@ -156,7 +156,7 @@ def decide_request(
         htg=0.0,
         usd=0.0,
         created_at=datetime.utcnow(),
-        )
+         )
         db.add(wallet)
         db.flush()  # important pour avoir l'id sans commit
 
