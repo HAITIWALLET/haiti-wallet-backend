@@ -126,23 +126,21 @@ def decide_request(
     db: Session = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
-    # 1️⃣ Récupérer la demande
     req = db.query(TopupRequest).filter(TopupRequest.id == req_id).first()
     if not req:
         raise HTTPException(status_code=404, detail="Demande introuvable")
 
-    # 2️⃣ Admin ne peut PAS approuver sa propre recharge
+    # ❌ admin ne peut PAS approuver sa propre recharge
     if admin.role == "admin" and req.user_id == admin.id:
         raise HTTPException(
             status_code=403,
-            detail="Un admin ne peut pas approuver sa propre recharge",
+            detail="Admin ne peut pas approuver sa propre recharge"
         )
 
-    # 3️⃣ Déjà traitée
     if req.status != "PENDING":
         raise HTTPException(status_code=400, detail="Demande déjà traitée")
 
-    # 4️⃣ 🔥 BUG FIX MAJEUR — on lit BIEN status
+    # ✅ LE SEUL CHAMP AUTORISÉ
     decision = (data.status or "").upper()
     if decision not in ("APPROVED", "REJECTED"):
         raise HTTPException(status_code=400, detail="Décision invalide")
@@ -151,20 +149,18 @@ def decide_request(
     req.approved_by = admin.id
     req.decided_at = datetime.utcnow()
 
-    # 5️⃣ APPROVED → créditer le wallet
     if decision == "APPROVED":
         wallet = db.query(Wallet).filter(Wallet.user_id == req.user_id).first()
 
-        # 🔥 BUG FIX — créer le wallet s’il n’existe pas
+        # ✅ CRÉATION AUTO DU WALLET (SANS created_at)
         if not wallet:
             wallet = Wallet(
                 user_id=req.user_id,
                 htg=0.0,
                 usd=0.0,
-                created_at=datetime.utcnow(),
             )
             db.add(wallet)
-            db.flush()  # PAS de commit ici
+            db.flush()
 
         if req.currency.lower() == "htg":
             wallet.htg += req.net_amount
@@ -173,14 +169,14 @@ def decide_request(
         else:
             raise HTTPException(status_code=400, detail="Devise invalide")
 
-        # Transaction TOPUP
         tx = Transaction(
             user_id=req.user_id,
             type="topup",
             currency=req.currency,
             amount=req.net_amount,
-            note=f"Topup approuvé ({req.method})",
+            note=f"Topup approuvé via {req.method}",
             direction="manual_topup",
+            rate_used=None,
             created_at=datetime.utcnow(),
         )
         db.add(tx)
@@ -188,5 +184,8 @@ def decide_request(
     db.commit()
     db.refresh(req)
 
-    return {"ok": True, "status": req.status}
-
+    return {
+        "ok": True,
+        "status": req.status,
+        "approved_by": admin.email,
+    }
