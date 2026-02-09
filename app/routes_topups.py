@@ -149,8 +149,17 @@ def decide_request(
 
     if decision == "APPROVED":
         wallet = db.query(Wallet).filter(Wallet.user_id == req.user_id).first()
+
         if not wallet:
-            raise HTTPException(500, "Wallet introuvable")
+          wallet = Wallet(
+        user_id=req.user_id,
+        htg=0.0,
+        usd=0.0,
+        created_at=datetime.utcnow(),
+        )
+        db.add(wallet)
+        db.flush()  # important pour avoir l'id sans commit
+
 
         if req.currency == "htg":
             wallet.htg += req.net_amount
