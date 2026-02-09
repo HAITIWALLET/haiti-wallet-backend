@@ -126,61 +126,67 @@ def decide_request(
     db: Session = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
+    # 1️⃣ Récupérer la demande
     req = db.query(TopupRequest).filter(TopupRequest.id == req_id).first()
     if not req:
-        raise HTTPException(404, "Demande introuvable")
+        raise HTTPException(status_code=404, detail="Demande introuvable")
 
-    # ❌ admin ne peut PAS approuver sa propre recharge
+    # 2️⃣ Admin ne peut PAS approuver sa propre recharge
     if admin.role == "admin" and req.user_id == admin.id:
-        raise HTTPException(403, "Admin ne peut pas approuver sa propre recharge")
+        raise HTTPException(
+            status_code=403,
+            detail="Un admin ne peut pas approuver sa propre recharge",
+        )
 
+    # 3️⃣ Déjà traitée
     if req.status != "PENDING":
-        raise HTTPException(400, "Déjà traitée")
+        raise HTTPException(status_code=400, detail="Demande déjà traitée")
 
-    # 🔥 ICI ÉTAIT LE BUG
-    decision = (data.decision or "").upper()
-
+    # 4️⃣ 🔥 BUG FIX MAJEUR — on lit BIEN status
+    decision = (data.status or "").upper()
     if decision not in ("APPROVED", "REJECTED"):
-        raise HTTPException(400, "Décision invalide")
+        raise HTTPException(status_code=400, detail="Décision invalide")
 
     req.status = decision
     req.approved_by = admin.id
     req.decided_at = datetime.utcnow()
 
+    # 5️⃣ APPROVED → créditer le wallet
     if decision == "APPROVED":
         wallet = db.query(Wallet).filter(Wallet.user_id == req.user_id).first()
 
+        # 🔥 BUG FIX — créer le wallet s’il n’existe pas
         if not wallet:
-          wallet = Wallet(
-        user_id=req.user_id,
-        htg=0.0,
-        usd=0.0,
-        created_at=datetime.utcnow(),
-         )
-        db.add(wallet)
-        db.flush()  # important pour avoir l'id sans commit
+            wallet = Wallet(
+                user_id=req.user_id,
+                htg=0.0,
+                usd=0.0,
+                created_at=datetime.utcnow(),
+            )
+            db.add(wallet)
+            db.flush()  # PAS de commit ici
 
-
-        if req.currency == "htg":
+        if req.currency.lower() == "htg":
             wallet.htg += req.net_amount
-        elif req.currency == "usd":
+        elif req.currency.lower() == "usd":
             wallet.usd += req.net_amount
+        else:
+            raise HTTPException(status_code=400, detail="Devise invalide")
 
+        # Transaction TOPUP
         tx = Transaction(
             user_id=req.user_id,
             type="topup",
             currency=req.currency,
             amount=req.net_amount,
-            note=f"Topup approuvé via {req.method}",
+            note=f"Topup approuvé ({req.method})",
             direction="manual_topup",
             created_at=datetime.utcnow(),
         )
         db.add(tx)
 
     db.commit()
+    db.refresh(req)
 
-    return {
-        "ok": True,
-        "status": req.status,
-        "approved_by": admin.email,
-    }
+    return {"ok": True, "status": req.status}
+
