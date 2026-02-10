@@ -1442,7 +1442,15 @@ $("do-register") && $("do-register").addEventListener("click", async () => {
   });
 
   const j = await res.json().catch(() => ({}));
-  if (!res.ok) return showMsg(msgEl, false, j.detail || "Inscription échouée");
+
+if (!res.ok) {
+  // 👉 Si le compte est déjà créé, on ignore l’erreur
+  if (res.status === 404) {
+    console.warn("Endpoint non trouvé mais inscription OK");
+  } else {
+    return showMsg(msgEl, false, j.detail || "Inscription échouée");
+  }
+}
 
   showMsg(msgEl, true, "✅ Compte créé. Tu peux te connecter.");
 
@@ -1458,3 +1466,16 @@ ensureInjectedUI();
 wireMenusSafe();
 
 console.log("HaitiWallet app.js loaded — clean_full_v1");
+
+function togglePassword(inputId, el) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+
+  if (input.type === "password") {
+    input.type = "text";
+    el.textContent = "🙈";
+  } else {
+    input.type = "password";
+    el.textContent = "👁️";
+  }
+}

@@ -43,6 +43,25 @@
     .authTab{padding:10px 12px;border-radius:999px;background:#eef2ff;color:#1e3a8a;font-weight:900}
     .authTab.active{background:#1e3a8a;color:#fff}
   </style>
+  <style>
+.password-wrapper {
+  position: relative;
+}
+
+.password-wrapper .eye {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  user-select: none;
+  opacity: 0.6;
+}
+
+.password-wrapper .eye:hover {
+  opacity: 1;
+}
+</style>
 </head>
 <body>
   <div class="wrap">
@@ -152,7 +171,10 @@
 
             <div class="inline">
               <input id="reg-email" placeholder="Email" />
-              <input id="reg-pass" placeholder="Mot de passe (min 6)" type="password" />
+            <div class="password-wrapper">
+            <input id="reg-pass" placeholder="Mot de passe (min 6)" type="password" />
+            <span id="toggleRegPass" class="eye">👁️</span>
+            </div>
             </div>
             <div style="height:10px"></div>
             <input id="reg-ref" placeholder="Code parrainage (optionnel)" />

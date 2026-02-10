@@ -137,7 +137,7 @@ class PhoneOTP(Base):
     __tablename__ = "phone_otps"
 
     id = Column(Integer, primary_key=True, index=True)
-    phone = Column(String, index=True, nullable=False)
+    phone = Column(String, unique=True, index=True, nullable=False)
     code = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     expires_at = Column(DateTime, nullable=False)

@@ -133,6 +133,14 @@ def phone_verify_and_register(data: PhoneVerifyIn, db: Session = Depends(get_db)
 
     if db.query(User).filter(User.email == email).first():
         raise HTTPException(400, "Email déjà utilisé")
+    
+    existing_user = db.query(User).filter(User.phone == phone).first()
+    if existing_user:
+        raise HTTPException(
+        status_code=400,
+        detail="Ce numéro est déjà utilisé."
+    )
+
 
     user = User(
         email=email,
