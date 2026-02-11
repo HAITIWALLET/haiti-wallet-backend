@@ -1428,31 +1428,31 @@ $("do-register") && $("do-register").addEventListener("click", async () => {
   if (!password || password.length < 6) return showMsg(msgEl, false, "Mot de passe min 6.");
 
   const res = await fetch("/auth/phone/verify_register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      phone,
-      code,
-      email,
-      password,
-      ref: ref || null,
-      first_name,
-      last_name
-    }),
-  });
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    phone,
+    code,
+    email,
+    password,
+    ref: ref || null,
+    first_name,
+    last_name,
+  }),
+});
 
-  const j = await res.json().catch(() => ({}));
+let j = {};
+try {
+  j = await res.json();
+} catch (e) {}
 
 if (!res.ok) {
-  // 👉 Si le compte est déjà créé, on ignore l’erreur
-  if (res.status === 404) {
-    console.warn("Endpoint non trouvé mais inscription OK");
-  } else {
-    return showMsg(msgEl, false, j.detail || "Inscription échouée");
-  }
+  return showMsg(msgEl, false, j.detail || "Erreur d'inscription");
 }
 
-  showMsg(msgEl, true, "✅ Compte créé. Tu peux te connecter.");
+// ✅ ICI C’EST FINI — PAS D’AUTRE APPEL
+showMsg(msgEl, true, "✅ Compte créé. Tu peux te connecter.");
+return;
 
   // Pré-remplir login
   if ($("email")) $("email").value = email;
@@ -1467,15 +1467,13 @@ wireMenusSafe();
 
 console.log("HaitiWallet app.js loaded — clean_full_v1");
 
-function togglePassword(inputId, el) {
-  const input = document.getElementById(inputId);
-  if (!input) return;
-
-  if (input.type === "password") {
-    input.type = "text";
-    el.textContent = "🙈";
-  } else {
-    input.type = "password";
-    el.textContent = "👁️";
-  }
+function showPassword(id) {
+  const input = document.getElementById(id);
+  if (input) input.type = "text";
 }
+
+function hidePassword(id) {
+  const input = document.getElementById(id);
+  if (input) input.type = "password";
+}
+
