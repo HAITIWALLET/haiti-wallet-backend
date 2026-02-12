@@ -1363,7 +1363,7 @@ $("btnSendOtp") && ($("btnSendOtp").onclick = async () => {
   const phone = ($("reg-phone")?.value || "").trim();
   if (!phone || phone.length < 8) return showMsg(msgEl, false, "Numéro invalide.");
 
-  const res = await fetch("https://haiti-wallet-backend-2.onrender.com/auth/phone/start", {
+  const res = await fetch("/auth/phone/start", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ phone }),
@@ -1379,61 +1379,79 @@ $("btnSendOtp") && ($("btnSendOtp").onclick = async () => {
 // ⚠️ On ne supprime PAS l'ancien listener déjà au-dessus.
 // On ajoute une logique "si champs OTP présents -> on fait verify_register".
 $("do-register") && $("do-register").addEventListener("click", async () => {
+
   const msgEl = $("registerMsg");
   hideMsg(msgEl);
 
   const first_name = ($("reg-first")?.value || "").trim();
-  const last_name = ($("reg-last")?.value || "").trim();
-  const phone = ($("reg-phone")?.value || "").trim();
-  const code = ($("reg-otp")?.value || "").trim();
+  const last_name  = ($("reg-last")?.value || "").trim();
+  const phone      = ($("reg-phone")?.value || "").trim();
+  const code       = ($("reg-otp")?.value || "").trim();
+  const email      = ($("reg-email")?.value || "").trim();
+  const password   = ($("reg-pass")?.value || "").trim();
+  const ref        = ($("reg-ref")?.value || "").trim();
 
-  const email = ($("reg-email")?.value || "").trim();
-  const password = ($("reg-pass")?.value || "").trim();
-  const ref = ($("reg-ref")?.value || "").trim();
+  if (!first_name || !last_name)
+    return showMsg(msgEl, false, "Nom et prénom requis.");
 
-  // Si l'utilisateur remplit téléphone + code, on fait le flow OTP.
-  const wantsOtpFlow = phone.length >= 8 || code.length >= 4 || first_name || last_name;
+  if (!phone || phone.length < 8)
+    return showMsg(msgEl, false, "Téléphone invalide.");
 
-  if (!wantsOtpFlow) {
-    // Sinon, on laisse le handler /auth/register faire le job (celui déjà présent plus haut)
-    return;
-  }
+  if (!code || code.length < 4)
+    return showMsg(msgEl, false, "Code SMS requis.");
 
-  if (!first_name || !last_name) return showMsg(msgEl, false, "Nom et prénom requis.");
-  if (!phone || phone.length < 8) return showMsg(msgEl, false, "Téléphone invalide.");
-  if (!code || code.length < 4) return showMsg(msgEl, false, "Code SMS requis.");
-  if (!email || email.length < 5) return showMsg(msgEl, false, "Email requis.");
-  if (!password || password.length < 6) return showMsg(msgEl, false, "Mot de passe min 6.");
+  if (!email || email.length < 5)
+    return showMsg(msgEl, false, "Email requis.");
 
-  const res = await fetch("https://haiti-wallet-backend-2.onrender.com/auth/phone/verify_register", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
+  if (!password || password.length < 6)
+    return showMsg(msgEl, false, "Mot de passe min 6.");
+
+  console.log("📤 Envoi vers verify_register...");
+  console.log({
     phone,
     code,
     email,
     password,
-    ref: ref || null,
+    ref,
     first_name,
-    last_name,
-  }),
-});
+    last_name
+  });
 
-let j = {};
-try {
-  j = await res.json();
-} catch (e) {}
+  const res = await fetch("/auth/phone/verify_register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      phone,
+      code,
+      email,
+      password,
+      ref: ref || null,
+      first_name,
+      last_name
+    })
+  });
 
-if (!res.ok) {
-  return showMsg(msgEl, false, j.detail || "Erreur d'inscription");
-}
+  console.log("📡 Status:", res.status);
 
-// ✅ ICI C’EST FINI — PAS D’AUTRE APPEL
-showMsg(msgEl, true, "✅ Compte créé. Tu peux te connecter.");
+  const raw = await res.text();
+  console.log("📦 Raw response:", raw);
 
-if ($("email")) $("email").value = email;
+  let data = {};
+  try {
+    data = JSON.parse(raw);
+  } catch (e) {
+    console.log("⚠️ JSON parse error");
+  }
 
-return;
+  if (!res.ok) {
+    console.log("❌ Backend error:", data);
+    return showMsg(msgEl, false, data.detail || "Erreur d'inscription");
+  }
+
+  console.log("✅ Succès inscription");
+  showMsg(msgEl, true, "✅ Compte créé. Tu peux te connecter.");
+
+  if ($("email")) $("email").value = email;
 });
 
 /* =========================================================
