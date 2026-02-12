@@ -1363,7 +1363,7 @@ $("btnSendOtp") && ($("btnSendOtp").onclick = async () => {
   const phone = ($("reg-phone")?.value || "").trim();
   if (!phone || phone.length < 8) return showMsg(msgEl, false, "Numéro invalide.");
 
-  const res = await fetch("/auth/phone/start", {
+  const res = await fetch("https://haiti-wallet-backend-2.onrender.com/auth/phone/start", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ phone }),
@@ -1405,7 +1405,7 @@ $("do-register") && $("do-register").addEventListener("click", async () => {
   if (!email || email.length < 5) return showMsg(msgEl, false, "Email requis.");
   if (!password || password.length < 6) return showMsg(msgEl, false, "Mot de passe min 6.");
 
-  const res = await fetch("/auth/phone/verify_register", {
+  const res = await fetch("https://haiti-wallet-backend-2.onrender.com/auth/phone/verify_register", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
