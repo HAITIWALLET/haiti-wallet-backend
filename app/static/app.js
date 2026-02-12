@@ -1463,6 +1463,9 @@ wireMenusSafe();
 
 console.log("HaitiWallet app.js loaded — clean_full_v1");
 
+// Initial tab activation
+showTab(tabFromHash());
+
 function showPassword(id) {
   const input = document.getElementById(id);
   if (input) input.type = "text";
