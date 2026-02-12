@@ -1341,28 +1341,6 @@ $("btnLogin") &&
     if (regBox) regBox.style.display = "none";
   });
 
-$("do-register") &&
-  $("do-register").addEventListener("click", async () => {
-    try {
-      const email = ($("reg-email")?.value || "").trim();
-      const password = ($("reg-pass")?.value || "").trim();
-      const ref = ($("reg-ref")?.value || "").trim();
-
-      if (!email || email.length < 5) return alert("Email invalide");
-      if (!password || password.length < 4) return alert("Mot de passe invalide");
-
-      await registerUser(email, password, ref);
-
-      alert("✅ Compte créé. Tu peux te connecter.");
-      if (regBox) regBox.style.display = "none";
-
-      // pré-remplir login
-      const loginEmail = $("email");
-      if (loginEmail) loginEmail.value = email;
-    } catch (e) {
-      alert(e.message || "Erreur inscription");
-    }
-  });
 
 /* ---------------------------
    Initial view
@@ -1452,10 +1430,10 @@ if (!res.ok) {
 
 // ✅ ICI C’EST FINI — PAS D’AUTRE APPEL
 showMsg(msgEl, true, "✅ Compte créé. Tu peux te connecter.");
-return;
 
-  // Pré-remplir login
-  if ($("email")) $("email").value = email;
+if ($("email")) $("email").value = email;
+
+return;
 });
 
 /* =========================================================
