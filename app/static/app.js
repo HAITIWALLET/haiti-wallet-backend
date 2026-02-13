@@ -1359,13 +1359,6 @@ $("btnCloseRegister") &&
     if (regBox) regBox.style.display = "none";
   });
 
-// Si tu cliques login (en haut) on cache le register box (sans empêcher login)
-$("btnLogin") &&
-  $("btnLogin").addEventListener("click", () => {
-    if (regBox) regBox.style.display = "none";
-  });
-
-
 /* ---------------------------
    Initial view
 --------------------------- */
