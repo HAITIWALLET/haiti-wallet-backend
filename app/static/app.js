@@ -257,10 +257,6 @@ function tabFromHash() {
   return TABS.includes(h) ? h : "dashboard";
 }
 
-window.addEventListener("load", () => {
-  showTab(tabFromHash());
-});
-
 /* ---------------------------
    AUTH
 --------------------------- */
