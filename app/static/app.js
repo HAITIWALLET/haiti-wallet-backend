@@ -1222,19 +1222,20 @@ function ensureInjectedUI() {
 $("btnLogin") &&
   ($("btnLogin").onclick = async () => {
     try {
-      await login($("email")?.value || "", $("password")?.value || "");
-      await refreshAll();
+    await login($("email")?.value || "", $("password")?.value || "");
 
-      $("loginBox")?.classList.add("hide");
-      $("appBox")?.classList.remove("hide");
+    console.log("LOGIN OK");
 
-      renderPaymentInstructions($("topMethod")?.value);
-      showTab(tabFromHash());
+    // commente temporairement
+    // await refreshAll();
+    // renderPaymentInstructions($("topMethod")?.value);
 
-      ensureInjectedUI();
-      wireMenusSafe();
+    showTab(tabFromHash());
+    ensureInjectedUI();
+    wireMenusSafe();
+
     } catch (e) {
-      showMsg($("loginMsg"), false, e.message);
+    showMsg($("loginMsg"), false, e.message);
     }
   });
 
