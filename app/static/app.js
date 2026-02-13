@@ -1386,7 +1386,7 @@ $("btnSendOtp") && ($("btnSendOtp").onclick = async () => {
 // 2) Inscription via OTP (utilise le même bouton do-register)
 // ⚠️ On ne supprime PAS l'ancien listener déjà au-dessus.
 // On ajoute une logique "si champs OTP présents -> on fait verify_register".
-/* $("do-register") && $("do-register").addEventListener("click", async () => {
+$("do-register") && $("do-register").addEventListener("click", async () => {
 
   const msgEl = $("registerMsg");
   hideMsg(msgEl);
@@ -1460,13 +1460,13 @@ $("btnSendOtp") && ($("btnSendOtp").onclick = async () => {
   showMsg(msgEl, true, "✅ Compte créé. Tu peux te connecter.");
 
   if ($("email")) $("email").value = email;
-}); */
+});
 
 /* =========================================================
    ⚠️ TON CODE ORIGINAL (non supprimé) — fin
 ========================================================= */
 
-/* ensureInjectedUI();
+ensureInjectedUI();
 wireMenusSafe();
 
 console.log("HaitiWallet app.js loaded — clean_full_v1");
@@ -1481,6 +1481,6 @@ function showPassword(id) {
 
 function hidePassword(id) {
   const input = document.getElementById(id);
-  if (input) input.type = "password"; 
+  if (input) input.type = "password";
 }
-*/
+
