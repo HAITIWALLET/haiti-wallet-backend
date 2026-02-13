@@ -222,12 +222,16 @@ function setActiveTabButton(name) {
 }
 
 function showTab(name) {
-  if (!TABS.includes(name)) name = "dashboard";
+  if (!TABS.includes(name)) {
+    name = "dashboard";
+  }
+
   for (const t of TABS) {
     const el = $(`tab-${t}`);
     if (!el) continue;
     el.classList.toggle("hide", t !== name);
   }
+  
   setActiveTabButton(name);
   location.hash = `#${name}`;
 }
