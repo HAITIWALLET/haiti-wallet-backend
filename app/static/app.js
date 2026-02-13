@@ -222,19 +222,35 @@ function setActiveTabButton(name) {
 }
 
 function showTab(name) {
-  if (!TABS.includes(name)) {
-    name = "dashboard";
-  }
 
-  for (const t of TABS) {
-    const el = $(`tab-${t}`);
-    if (!el) continue;
-    el.classList.toggle("hide", t !== name);
-  }
-  
-  setActiveTabButton(name);
-  location.hash = `#${name}`;
+    if (!TABS.includes(name)) {
+        name = "dashboard";
+    }
+
+    let foundVisible = false;
+
+    for (const t of TABS) {
+        const el = document.getElementById(`tab-${t}`);
+        if (!el) continue;
+
+        const shouldHide = t !== name;
+        el.classList.toggle("hide", shouldHide);
+
+        if (!shouldHide) {
+            foundVisible = true;
+        }
+    }
+
+    // sécurité ultime : si rien n'est visible, force dashboard
+    if (!foundVisible) {
+        const dash = document.getElementById("tab-dashboard");
+        if (dash) dash.classList.remove("hide");
+    }
+
+    setActiveTabButton(name);
+    location.hash = `#${name}`;
 }
+
 
 function tabFromHash() {
   const h = (location.hash || "").replace("#", "").trim();
