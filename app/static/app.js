@@ -6,6 +6,9 @@
 let token = "";
 let me = null;
 let fx = { sell_usd: 134.0, buy_usd: 126.0 };
+let superadminUsersCache = [];
+let superadminPage = 1;
+const SUPERADMIN_PAGE_SIZE = 10;
 
 const $ = (id) => document.getElementById(id);
 
@@ -1078,30 +1081,39 @@ function injectSuperadminBox() {
   card.id = "superadminCard";
   card.className = "card section hide"; // caché par défaut
   card.innerHTML = `
-    <div class="inline" style="justify-content:space-between;align-items:center">
-      <h3 style="margin:0">Superadmin — Gestion des administrateurs</h3>
-      <button id="btnSaRefresh" class="secondary" style="max-width:180px">Rafraîchir</button>
-    </div>
-    <div style="height:10px"></div>
-    <div id="saMsg" class="hide"></div>
+  <div class="inline" style="justify-content:space-between;align-items:center">
+    <h3 style="margin:0">Superadmin — Gestion des utilisateurs</h3>
+    <button id="btnSaRefresh" class="secondary" style="max-width:180px">Rafraîchir</button>
+  </div>
 
-    <div style="overflow:auto">
-      <table class="table" style="min-width:680px">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Email</th>
-            <th>Rôle</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody id="saUsersBody"></tbody>
-      </table>
-    </div>
-    <div class="muted" style="margin-top:10px">
-      Note: seuls les rôles <b>user</b> et <b>admin</b> sont gérables ici. Le rôle <b>superadmin</b> n’est jamais attribué via l’interface.
-    </div>
-  `;
+  <div style="height:10px"></div>
+
+  <!-- 🔎 Recherche -->
+  <div class="inline">
+    <input id="saSearch" placeholder="🔎 Rechercher par email..." />
+  </div>
+
+  <div style="height:10px"></div>
+  <div id="saMsg" class="hide"></div>
+
+  <div style="overflow:auto">
+    <table class="table" style="min-width:720px">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Email</th>
+          <th>Rôle</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="saUsersBody"></tbody>
+    </table>
+  </div>
+
+  <div style="height:10px"></div>
+  <button id="btnSaMore" class="secondary" style="max-width:180px">Voir plus</button>
+`;
 
   tabAdmin.insertBefore(card, tabAdmin.firstChild);
   $("btnSaRefresh")?.addEventListener("click", loadUsersSuperadmin);
@@ -1113,52 +1125,120 @@ async function loadUsersSuperadmin() {
 
   const tbody = $("saUsersBody");
   if (!tbody) return;
-  tbody.innerHTML = `<tr><td colspan="4" class="muted">Chargement...</td></tr>`;
+
+  tbody.innerHTML = `<tr><td colspan="5" class="muted">Chargement...</td></tr>`;
 
   const res = await api("/superadmin/users");
   const j = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    tbody.innerHTML = `<tr><td colspan="4" class="muted">Erreur</td></tr>`;
-    showMsg(msgEl, false, j.detail || "Impossible de charger les utilisateurs");
+    tbody.innerHTML = `<tr><td colspan="5" class="muted">Erreur</td></tr>`;
+    showMsg(msgEl, false, j.detail || "Impossible de charger");
     return;
   }
 
-  const users = Array.isArray(j) ? j : [];
-  if (users.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="4" class="muted">Aucun utilisateur</td></tr>`;
-    return;
+  superadminUsersCache = Array.isArray(j) ? j : [];
+  superadminPage = 1;
+
+  renderSuperadminUsers();
+}
+
+function renderSuperadminUsers() {
+  const tbody = $("saUsersBody");
+  if (!tbody) return;
+
+  const search = ($("saSearch")?.value || "").toLowerCase();
+
+  let filtered = superadminUsersCache;
+
+  if (search) {
+    filtered = filtered.filter(u =>
+      (u.email || "").toLowerCase().includes(search)
+    );
   }
+
+  const limit = superadminPage * SUPERADMIN_PAGE_SIZE;
+  const pageItems = filtered.slice(0, limit);
 
   tbody.innerHTML = "";
-  for (const u of users) {
-    const isAdmin = (u.role || "").toLowerCase() === "admin";
-    const roleLabel = (u.role || "user").toUpperCase();
 
+  if (pageItems.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" class="muted">Aucun résultat</td></tr>`;
+    return;
+  }
+
+  for (const u of pageItems) {
     tbody.innerHTML += `
       <tr>
         <td>${u.id}</td>
         <td>${u.email}</td>
-        <td><b>${roleLabel}</b></td>
+        <td><b>${(u.role || "user").toUpperCase()}</b></td>
+        <td>${(u.status || "active").toUpperCase()}</td>
         <td>
-          <div class="inline" style="gap:8px">
-            <button class="btnSmall ${isAdmin ? "btnNo" : "btnOk"}" data-uid="${u.id}" data-next="${isAdmin ? "user" : "admin"}">
-              ${isAdmin ? "Retirer admin" : "Nommer admin"}
-            </button>
+          <div class="inline" style="gap:6px;flex-wrap:wrap">
+            <button class="btnSmall btnOk" data-uid="${u.id}" data-role="admin">Nommer admin</button>
+            <button class="btnSmall secondary" data-uid="${u.id}" data-status="paused">En pause</button>
+            <button class="btnSmall btnNo" data-uid="${u.id}" data-status="banned">Bannir</button>
+            <button class="btnSmall dark" data-view="${u.id}">Voir</button>
           </div>
         </td>
       </tr>
     `;
   }
 
-  tbody.querySelectorAll("button[data-uid]").forEach((btn) => {
+  wireSuperadminButtons();
+}
+
+function wireSuperadminButtons() {
+
+  document.querySelectorAll("button[data-status]").forEach(btn => {
     btn.onclick = async () => {
-      const uid = Number(btn.getAttribute("data-uid"));
-      const role = btn.getAttribute("data-next");
-      await setUserRoleSuperadmin(uid, role);
+      const uid = btn.getAttribute("data-uid");
+      const status = btn.getAttribute("data-status");
+
+      if (!confirm(`Changer statut vers ${status} ?`)) return;
+
+      await api(`/superadmin/users/${uid}/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status })
+      });
+
+      await loadUsersSuperadmin();
+    };
+  });
+
+  document.querySelectorAll("button[data-role]").forEach(btn => {
+    btn.onclick = async () => {
+      const uid = btn.getAttribute("data-uid");
+
+      await api(`/superadmin/users/${uid}/role`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: "admin" })
+      });
+
+      await loadUsersSuperadmin();
+    };
+  });
+
+  document.querySelectorAll("button[data-view]").forEach(btn => {
+    btn.onclick = () => {
+      const uid = btn.getAttribute("data-view");
+      alert("Voir compte ID: " + uid);
     };
   });
 }
+
+$("saSearch")?.addEventListener("input", () => {
+  superadminPage = 1;
+  renderSuperadminUsers();
+});
+
+$("btnSaMore")?.addEventListener("click", () => {
+  superadminPage++;
+  renderSuperadminUsers();
+});
 
 async function setUserRoleSuperadmin(userId, role) {
   const msgEl = $("saMsg");
