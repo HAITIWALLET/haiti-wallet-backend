@@ -6,9 +6,6 @@
 let token = "";
 let me = null;
 let fx = { sell_usd: 134.0, buy_usd: 126.0 };
-let superadminUsersCache = [];
-let superadminPage = 1;
-const SUPERADMIN_PAGE_SIZE = 10;
 
 const $ = (id) => document.getElementById(id);
 
@@ -1119,21 +1116,25 @@ function injectSuperadminBox() {
   $("btnSaRefresh")?.addEventListener("click", loadUsersSuperadmin);
 }
 
-async function loadUsersSuperadmin() {
-  const msgEl = $("saMsg");
-  hideMsg(msgEl);
+/* ================================
+   SUPERADMIN COMPLETE CONTROLLER
+================================= */
 
+const SUPERADMIN_PAGE_SIZE = 10;
+let superadminUsersCache = [];
+let superadminPage = 1;
+
+async function loadUsersSuperadmin() {
   const tbody = $("saUsersBody");
   if (!tbody) return;
 
-  tbody.innerHTML = `<tr><td colspan="5" class="muted">Chargement...</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="6" class="muted">Chargement...</td></tr>`;
 
   const res = await api("/superadmin/users");
   const j = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    tbody.innerHTML = `<tr><td colspan="5" class="muted">Erreur</td></tr>`;
-    showMsg(msgEl, false, j.detail || "Impossible de charger");
+    tbody.innerHTML = `<tr><td colspan="6" class="muted">Erreur</td></tr>`;
     return;
   }
 
@@ -1149,12 +1150,11 @@ function renderSuperadminUsers() {
 
   const search = ($("saSearch")?.value || "").toLowerCase().trim();
 
-  let filtered = superadminUsersCache || [];
+  let filtered = superadminUsersCache;
 
-  // 🔎 Filtrage instantané
   if (search) {
     filtered = filtered.filter(u =>
-      (u.email || "").toLowerCase().includes(search)
+      (u.email || "").toLowerCase().startsWith(search)
     );
   }
 
@@ -1164,26 +1164,33 @@ function renderSuperadminUsers() {
   tbody.innerHTML = "";
 
   if (pageItems.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="muted">Aucun résultat</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="muted">Aucun résultat</td></tr>`;
     return;
   }
 
   for (const u of pageItems) {
-    const roleLabel = (u.role || "user").toUpperCase();
-    const statusLabel = (u.status || "active").toUpperCase();
+    const isSuperadmin = u.role === "superadmin";
+    const pauseLabel = u.status === "paused" ? "Ouvrir" : "Pause";
 
     tbody.innerHTML += `
       <tr>
         <td>${u.id}</td>
         <td>${u.email}</td>
-        <td><b>${roleLabel}</b></td>
-        <td>${statusLabel}</td>
+        <td>${u.role}</td>
+        <td>${u.status}</td>
         <td>
           <div class="inline" style="gap:4px;flex-wrap:wrap">
-            <button class="btnSmall btnMini btnOk" data-uid="${u.id}" data-role="admin">Admin</button>
-            <button class="btnSmall btnMini secondary" data-uid="${u.id}" data-status="paused">Pause</button>
-            <button class="btnSmall btnMini btnNo" data-uid="${u.id}" data-status="banned">Ban</button>
+
+            ${!isSuperadmin ? `
+            <button class="btnSmall btnMini btnOk" data-role="${u.id}">Admin</button>
+            <button class="btnSmall btnMini secondary" data-pause="${u.id}">${pauseLabel}</button>
+            <button class="btnSmall btnMini btnNo" data-ban="${u.id}">Ban</button>
+            <button class="btnSmall btnMini btnNo" data-delete="${u.id}">Supprimer</button>
+            <button class="btnSmall btnMini dark" data-impersonate="${u.id}">Login</button>
+            ` : `<span class="muted">Superadmin protégé</span>`}
+
             <button class="btnSmall btnMini dark" data-view="${u.id}">Voir</button>
+
           </div>
         </td>
       </tr>
@@ -1195,41 +1202,111 @@ function renderSuperadminUsers() {
 
 function wireSuperadminButtons() {
 
-  document.querySelectorAll("button[data-status]").forEach(btn => {
-    btn.onclick = async () => {
-      const uid = btn.getAttribute("data-uid");
-      const status = btn.getAttribute("data-status");
-
-      if (!confirm(`Changer statut vers ${status} ?`)) return;
-
-      await api(`/superadmin/users/${uid}/status`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status })
-      });
-
-      await loadUsersSuperadmin();
-    };
+  // 🔎 Recherche instantanée
+  document.addEventListener("input", (e) => {
+    if (e.target.id === "saSearch") {
+      superadminPage = 1;
+      renderSuperadminUsers();
+    }
   });
 
-  document.querySelectorAll("button[data-role]").forEach(btn => {
+  // ADMIN
+  document.querySelectorAll("[data-role]").forEach(btn => {
     btn.onclick = async () => {
-      const uid = btn.getAttribute("data-uid");
+      const uid = btn.getAttribute("data-role");
 
       await api(`/superadmin/users/${uid}/role`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: "admin" })
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({role: "admin"})
       });
 
       await loadUsersSuperadmin();
     };
   });
 
-  document.querySelectorAll("button[data-view]").forEach(btn => {
-    btn.onclick = () => {
+  // PAUSE
+  document.querySelectorAll("[data-pause]").forEach(btn => {
+    btn.onclick = async () => {
+      const uid = btn.getAttribute("data-pause");
+
+      const user = superadminUsersCache.find(u => String(u.id) === uid);
+      const newStatus = user.status === "paused" ? "active" : "paused";
+
+      await api(`/admin/users/users/${uid}/status`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({status: newStatus})
+      });
+
+      await loadUsersSuperadmin();
+    };
+  });
+
+  // BAN
+  document.querySelectorAll("[data-ban]").forEach(btn => {
+    btn.onclick = async () => {
+      const uid = btn.getAttribute("data-ban");
+
+      if (!confirm("Bannir définitivement cet utilisateur ?")) return;
+
+      await api(`/admin/users/users/${uid}/status`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({status: "banned"})
+      });
+
+      await loadUsersSuperadmin();
+    };
+  });
+
+  // DELETE
+  document.querySelectorAll("[data-delete]").forEach(btn => {
+    btn.onclick = async () => {
+      const uid = btn.getAttribute("data-delete");
+
+      if (!confirm("⚠️ Supprimer définitivement ?")) return;
+      if (!confirm("CONFIRMATION FINALE — irréversible")) return;
+
+      await api(`/superadmin/users/${uid}`, {method: "DELETE"});
+
+      await loadUsersSuperadmin();
+    };
+  });
+
+  // IMPERSONATE
+  document.querySelectorAll("[data-impersonate]").forEach(btn => {
+    btn.onclick = async () => {
+      const uid = btn.getAttribute("data-impersonate");
+
+      if (!confirm("Se connecter comme cet utilisateur ?")) return;
+
+      const res = await api(`/superadmin/users/${uid}/impersonate`, {method: "POST"});
+      const j = await res.json();
+
+      if (!res.ok) return alert("Erreur");
+
+      token = j.access_token;
+      await refreshAll();
+      showTab("dashboard");
+    };
+  });
+
+  // VIEW POPUP
+  document.querySelectorAll("[data-view]").forEach(btn => {
+    btn.onclick = async () => {
       const uid = btn.getAttribute("data-view");
-      alert("Voir compte ID: " + uid);
+
+      const user = superadminUsersCache.find(u => String(u.id) === uid);
+
+      alert(
+`ID: ${user.id}
+Email: ${user.email}
+Rôle: ${user.role}
+Statut: ${user.status}
+Téléphone: ${user.phone || "-"}
+Créé le: ${user.created_at || "-"}`
+      );
     };
   });
 }
