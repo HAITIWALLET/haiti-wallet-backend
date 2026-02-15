@@ -1147,10 +1147,11 @@ function renderSuperadminUsers() {
   const tbody = $("saUsersBody");
   if (!tbody) return;
 
-  const search = ($("saSearch")?.value || "").toLowerCase();
+  const search = ($("saSearch")?.value || "").toLowerCase().trim();
 
-  let filtered = superadminUsersCache;
+  let filtered = superadminUsersCache || [];
 
+  // 🔎 Filtrage instantané
   if (search) {
     filtered = filtered.filter(u =>
       (u.email || "").toLowerCase().includes(search)
@@ -1168,18 +1169,21 @@ function renderSuperadminUsers() {
   }
 
   for (const u of pageItems) {
+    const roleLabel = (u.role || "user").toUpperCase();
+    const statusLabel = (u.status || "active").toUpperCase();
+
     tbody.innerHTML += `
       <tr>
         <td>${u.id}</td>
         <td>${u.email}</td>
-        <td><b>${(u.role || "user").toUpperCase()}</b></td>
-        <td>${(u.status || "active").toUpperCase()}</td>
+        <td><b>${roleLabel}</b></td>
+        <td>${statusLabel}</td>
         <td>
-          <div class="inline" style="gap:6px;flex-wrap:wrap">
-            <button class="btnSmall btnOk" data-uid="${u.id}" data-role="admin">Nommer admin</button>
-            <button class="btnSmall secondary" data-uid="${u.id}" data-status="paused">En pause</button>
-            <button class="btnSmall btnNo" data-uid="${u.id}" data-status="banned">Bannir</button>
-            <button class="btnSmall dark" data-view="${u.id}">Voir</button>
+          <div class="inline" style="gap:4px;flex-wrap:wrap">
+            <button class="btnSmall btnMini btnOk" data-uid="${u.id}" data-role="admin">Admin</button>
+            <button class="btnSmall btnMini secondary" data-uid="${u.id}" data-status="paused">Pause</button>
+            <button class="btnSmall btnMini btnNo" data-uid="${u.id}" data-status="banned">Ban</button>
+            <button class="btnSmall btnMini dark" data-view="${u.id}">Voir</button>
           </div>
         </td>
       </tr>
@@ -1230,35 +1234,6 @@ function wireSuperadminButtons() {
   });
 }
 
-$("saSearch")?.addEventListener("input", () => {
-  superadminPage = 1;
-  renderSuperadminUsers();
-});
-
-$("btnSaMore")?.addEventListener("click", () => {
-  superadminPage++;
-  renderSuperadminUsers();
-});
-
-async function setUserRoleSuperadmin(userId, role) {
-  const msgEl = $("saMsg");
-  hideMsg(msgEl);
-
-  const res = await api(`/superadmin/users/${userId}/role`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ role }),
-  });
-
-  const j = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    showMsg(msgEl, false, j.detail || "Action échouée");
-    return;
-  }
-
-  showMsg(msgEl, true, `Rôle mis à jour: ${j.email} → ${String(j.role).toUpperCase()}`);
-  await loadUsersSuperadmin();
-}
 
 /* ---------------------------
    Referral copy
