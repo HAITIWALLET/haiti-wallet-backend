@@ -6,7 +6,6 @@ from .models import User
 from .security import require_superadmin
 from .schemas import UserOut, RoleUpdateIn
 from .security import create_access_token
-from .routes_auth import get_current_superadmin
 
 router = APIRouter(prefix="/superadmin", tags=["superadmin"])
 
@@ -50,7 +49,7 @@ def set_user_role(
 def delete_user(
     user_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_superadmin)
+    current_user: User = Depends(require_superadmin)
 ):
     user = db.query(User).filter(User.id == user_id).first()
 
@@ -69,7 +68,7 @@ def delete_user(
 def impersonate_user(
     user_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_superadmin)
+    current_user: User = Depends(require_superadmin)
 ):
     user = db.query(User).filter(User.id == user_id).first()
 
