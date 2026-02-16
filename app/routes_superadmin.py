@@ -5,8 +5,8 @@ from .db import get_db
 from .models import User
 from .security import require_superadmin
 from .schemas import UserOut, RoleUpdateIn
-from security import create_access_token
-from routes_auth import get_current_superadmin
+from .security import create_access_token
+from .routes_auth import get_current_superadmin
 
 router = APIRouter(prefix="/superadmin", tags=["superadmin"])
 
