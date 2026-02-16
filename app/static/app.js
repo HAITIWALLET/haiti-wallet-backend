@@ -1229,7 +1229,7 @@ function renderSuperadminUsers() {
 
             <button class="btnSmall btnMini dark"
               data-view="${u.id}">
-              Voir +
+              Voir le compte
             </button>
 
           </div>
@@ -1237,6 +1237,16 @@ function renderSuperadminUsers() {
       </tr>
     `;
   }
+
+  // Masquer bouton voir plus si plus rien à afficher
+const btnMore = document.getElementById("btnSaMore");
+if (btnMore) {
+  if (limit >= filtered.length) {
+    btnMore.style.display = "none";
+  } else {
+    btnMore.style.display = "inline-block";
+  }
+}
 
   wireSuperadminButtons();
 }
@@ -1267,17 +1277,25 @@ function wireSuperadminButtons() {
     };
   });
 
- // REMOVE ADMIN
-document.querySelectorAll("[data-remove-admin]").forEach(btn => {
+ // Changer rôle (admin <-> user)
+document.querySelectorAll("[data-role]").forEach(btn => {
   btn.onclick = async () => {
-    const uid = btn.getAttribute("data-remove-admin");
+    const uid = btn.getAttribute("data-role");
 
-    if (!confirm("Retirer les droits admin ?")) return;
+    const isCurrentlyAdmin =
+      superadminUsersCache.find(u => String(u.id) === uid)?.role === "admin";
 
-    await api(`/superadmin/users/${uid}/role`, {
+    const newRole = isCurrentlyAdmin ? "user" : "admin";
+
+    const res = await api(`/superadmin/users/${uid}/role`, {
       method: "POST",
-      body: JSON.stringify({ role: "user" })
+      body: JSON.stringify({ role: newRole })
     });
+
+    if (!res.ok) {
+      alert("Erreur changement rôle");
+      return;
+    }
 
     await loadUsersSuperadmin();
   };
@@ -1292,7 +1310,7 @@ document.querySelectorAll("[data-remove-admin]").forEach(btn => {
       const user = superadminUsersCache.find(u => String(u.id) === uid);
       const newStatus = user.status === "paused" ? "active" : "paused";
 
-      await api(`/admin/users/users/${uid}/status`, {
+      await api(`/superadmin/users/${uid}/status`, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({status: newStatus})
@@ -1309,7 +1327,7 @@ document.querySelectorAll("[data-remove-admin]").forEach(btn => {
 
       if (!confirm("Bannir définitivement cet utilisateur ?")) return;
 
-      await api(`/admin/users/users/${uid}/status`, {
+      await api(`/superadmin/users/${uid}/status`, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({status: "banned"})
@@ -1350,6 +1368,15 @@ document.querySelectorAll("[data-remove-admin]").forEach(btn => {
       showTab("dashboard");
     };
   });
+
+  // Voir plus pagination
+const btnMore = document.getElementById("btnSaMore");
+if (btnMore) {
+  btnMore.onclick = () => {
+    superadminPage++;
+    renderSuperadminUsers();
+  };
+}
 
   // VIEW DETAILS
 document.querySelectorAll("[data-view]").forEach(btn => {
