@@ -64,11 +64,11 @@ def delete_user(
 
     return {"message": "Utilisateur supprimé"}
 
-@router.post("/superadmin/users/{user_id}/impersonate")
+@router.post("/users/{user_id}/impersonate")
 def impersonate_user(
     user_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_superadmin)
+    sa: User = Depends(require_superadmin),
 ):
     user = db.query(User).filter(User.id == user_id).first()
 
@@ -78,8 +78,49 @@ def impersonate_user(
     if user.role == "superadmin":
         raise HTTPException(status_code=403, detail="Impossible d'impersoner un superadmin")
 
-    access_token = create_access_token(
-        data={"sub": user.email}
-    )
+    access_token = create_access_token(data={"sub": user.email})
 
     return {"access_token": access_token}
+
+
+@router.post("/users/{user_id}/status")
+def change_status(
+    user_id: int,
+    status: str,
+    db: Session = Depends(get_db),
+    sa: User = Depends(require_superadmin),
+):
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="Utilisateur introuvable")
+
+    if user.role == "superadmin":
+        raise HTTPException(status_code=403, detail="Impossible de modifier un superadmin")
+
+    if status not in ["active", "suspended", "banned"]:
+        raise HTTPException(status_code=400, detail="Statut invalide")
+
+    user.status = status
+    db.commit()
+
+    return {"message": f"Statut changé en {status}"}
+
+@router.delete("/users/{user_id}")
+def delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    sa: User = Depends(require_superadmin),
+):
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="Utilisateur introuvable")
+
+    if user.role == "superadmin":
+        raise HTTPException(status_code=403, detail="Impossible de supprimer un superadmin")
+
+    db.delete(user)
+    db.commit()
+
+    return {"message": "Utilisateur supprimé"}

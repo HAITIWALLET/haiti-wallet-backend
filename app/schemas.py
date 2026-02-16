@@ -51,6 +51,10 @@ class UserOut(BaseModel):
     id: int
     email: str
     role: str
+    status: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    phone: Optional[str] = None
     created_at: Optional[datetime] = None
 
 

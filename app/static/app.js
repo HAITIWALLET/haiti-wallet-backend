@@ -1124,6 +1124,11 @@ const SUPERADMIN_PAGE_SIZE = 10;
 let superadminUsersCache = [];
 let superadminPage = 1;
 
+$("btnSaMore")?.addEventListener("click", () => {
+  superadminPage++;
+  renderSuperadminUsers();
+});
+
 async function loadUsersSuperadmin() {
   const tbody = $("saUsersBody");
   if (!tbody) return;
@@ -1154,7 +1159,7 @@ function renderSuperadminUsers() {
 
   if (search) {
     filtered = filtered.filter(u =>
-      (u.email || "").toLowerCase().startsWith(search)
+      (u.email || "").toLowerCase().includes(search)
     );
   }
 
@@ -1164,12 +1169,15 @@ function renderSuperadminUsers() {
   tbody.innerHTML = "";
 
   if (pageItems.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="muted">Aucun résultat</td></tr>`;
+    tbody.innerHTML =
+      `<tr><td colspan="6" class="muted">Aucun résultat</td></tr>`;
     return;
   }
 
   for (const u of pageItems) {
     const isSuperadmin = u.role === "superadmin";
+    const isAdmin = u.role === "admin";
+
     const pauseLabel = u.status === "paused" ? "Ouvrir" : "Pause";
 
     tbody.innerHTML += `
@@ -1181,15 +1189,48 @@ function renderSuperadminUsers() {
         <td>
           <div class="inline" style="gap:4px;flex-wrap:wrap">
 
-            ${!isSuperadmin ? `
-            <button class="btnSmall btnMini btnOk" data-role="${u.id}">Admin</button>
-            <button class="btnSmall btnMini secondary" data-pause="${u.id}">${pauseLabel}</button>
-            <button class="btnSmall btnMini btnNo" data-ban="${u.id}">Ban</button>
-            <button class="btnSmall btnMini btnNo" data-delete="${u.id}">Supprimer</button>
-            <button class="btnSmall btnMini dark" data-impersonate="${u.id}">Login</button>
-            ` : `<span class="muted">Superadmin protégé</span>`}
+            ${
+              isSuperadmin
+                ? `<span class="muted">Superadmin protégé</span>`
+                : `
+                ${
+                  isAdmin
+                    ? `<button class="btnSmall btnMini secondary"
+                        data-remove-admin="${u.id}">
+                        Retirer admin
+                      </button>`
+                    : `<button class="btnSmall btnMini btnOK"
+                        data-role="${u.id}">
+                        Admin
+                      </button>`
+                }
 
-            <button class="btnSmall btnMini dark" data-view="${u.id}">Voir</button>
+                <button class="btnSmall btnMini secondary"
+                  data-pause="${u.id}">
+                  ${pauseLabel}
+                </button>
+
+                <button class="btnSmall btnMini btnNo"
+                  data-ban="${u.id}">
+                  Ban
+                </button>
+
+                <button class="btnSmall btnMini btnNo"
+                  data-delete="${u.id}">
+                  Supprimer
+                </button>
+
+                <button class="btnSmall btnMini dark"
+                  data-impersonate="${u.id}">
+                  Login
+                </button>
+              `
+            }
+
+            <button class="btnSmall btnMini dark"
+              data-view="${u.id}">
+              Voir +
+            </button>
 
           </div>
         </td>
@@ -1199,6 +1240,7 @@ function renderSuperadminUsers() {
 
   wireSuperadminButtons();
 }
+
 
 function wireSuperadminButtons() {
 
@@ -1224,6 +1266,23 @@ function wireSuperadminButtons() {
       await loadUsersSuperadmin();
     };
   });
+
+ // REMOVE ADMIN
+document.querySelectorAll("[data-remove-admin]").forEach(btn => {
+  btn.onclick = async () => {
+    const uid = btn.getAttribute("data-remove-admin");
+
+    if (!confirm("Retirer les droits admin ?")) return;
+
+    await api(`/superadmin/users/${uid}/role`, {
+      method: "POST",
+      body: JSON.stringify({ role: "user" })
+    });
+
+    await loadUsersSuperadmin();
+  };
+});
+
 
   // PAUSE
   document.querySelectorAll("[data-pause]").forEach(btn => {
@@ -1291,6 +1350,27 @@ function wireSuperadminButtons() {
       showTab("dashboard");
     };
   });
+
+  // VIEW DETAILS
+document.querySelectorAll("[data-view]").forEach(btn => {
+  btn.onclick = () => {
+    const uid = btn.getAttribute("data-view");
+
+    const user = superadminUsersCache.find(
+      u => String(u.id) === uid
+    );
+
+    if (!user) return alert("Utilisateur introuvable");
+
+    alert(
+`ID: ${user.id}
+Email: ${user.email}
+Rôle: ${user.role}
+Statut: ${user.status}
+Créé le: ${user.created_at || "N/A"}`
+    );
+  };
+});
 
   // VIEW POPUP
   document.querySelectorAll("[data-view]").forEach(btn => {
