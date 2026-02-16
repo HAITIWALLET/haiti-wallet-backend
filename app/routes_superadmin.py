@@ -14,9 +14,18 @@ router = APIRouter(prefix="/superadmin", tags=["superadmin"])
 def list_users(db: Session = Depends(get_db), sa: User = Depends(require_superadmin)):
     users = db.query(User).order_by(User.id.asc()).all()
     return [
-        UserOut(id=u.id, email=u.email, role=u.role, created_at=getattr(u, "created_at", None))
-        for u in users
-    ]
+    UserOut(
+        id=u.id,
+        email=u.email,
+        role=u.role,
+        status=u.status,
+        first_name=u.first_name,
+        last_name=u.last_name,
+        phone=u.phone,
+        created_at=u.created_at
+    )
+    for u in users
+]
 
 
 @router.post("/users/{user_id}/role", response_model=UserOut)
@@ -43,7 +52,16 @@ def set_user_role(
     db.commit()
     db.refresh(u)
 
-    return UserOut(id=u.id, email=u.email, role=u.role, created_at=getattr(u, "created_at", None))
+    return UserOut(
+    id=u.id,
+    email=u.email,
+    role=u.role,
+    status=u.status,
+    first_name=u.first_name,
+    last_name=u.last_name,
+    phone=u.phone,
+    created_at=u.created_at
+)
 
 @router.delete("/superadmin/users/{user_id}")
 def delete_user(
