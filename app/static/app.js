@@ -3,7 +3,8 @@
 // Fix: doublons (renderBalances), IDs register/login, API undefined, admin tab pour admin+superadmin,
 // Superadmin UI cohérente, wiring centralisé, register via /auth/register.
 
-let token = "";
+let token = localStorage.getItem("token") || "";
+let superadminToken = localStorage.getItem("superadmin_token") || "";
 let me = null;
 let fx = { sell_usd: 134.0, buy_usd: 126.0 };
 
@@ -277,6 +278,13 @@ async function login(email, password) {
   }
   const j = await res.json();
   token = j.access_token;
+
+  localStorage.setItem("token", token);
+
+if (j.user?.role === "superadmin") {
+    localStorage.setItem("superadmin_token", token);
+    superadminToken = token;
+}
 }
 
 async function registerUser(email, password, ref) {
@@ -1354,18 +1362,25 @@ document.querySelectorAll("[data-role]").forEach(btn => {
   // IMPERSONATE
   document.querySelectorAll("[data-impersonate]").forEach(btn => {
     btn.onclick = async () => {
-      const uid = btn.getAttribute("data-impersonate");
+    const uid = btn.getAttribute("data-impersonate");
 
-      if (!confirm("Se connecter comme cet utilisateur ?")) return;
+    superadminTOKEN = token;
 
-      const res = await api(`/superadmin/users/${uid}/impersonate`, {method: "POST"});
-      const j = await res.json();
+    if (!confirm("Se connecter comme cet utilisateur ?")) return;
 
-      if (!res.ok) return alert("Erreur");
+    const res = await api(`/superadmin/users/${uid}/impersonate`, {
+        method: "POST"
+    });
 
-      token = j.access_token;
-      await refreshAll();
-      showTab("dashboard");
+    if (!res.ok) return alert("Erreur impersonate");
+
+    const j = await res.json();
+
+    token = j.access_token;
+    localStorage.setItem("token", token);
+
+    await refreshAll();
+    showTab("dashboard");
     };
   });
 
@@ -1466,6 +1481,13 @@ function ensureInjectedUI() {
   }
 }
 
+function restoreSuperadmin() {
+    token = superadminToken;
+    localStorage.setItem("token", token);
+    refreshAll();
+}
+
+
 /* ---------------------------
    EVENTS
 --------------------------- */
@@ -1474,7 +1496,14 @@ $("btnLogin") &&
   ($("btnLogin").onclick = async () => {
     try {
       await login($("email")?.value || "", $("password")?.value || "");
+
+// 🔥 AJOUTE ÇA ICI
+      if (me?.role === "superadmin") {
+      superadminToken = token;
+      }
+
       await refreshAll();
+
 
       $("loginBox")?.classList.add("hide");
       $("appBox")?.classList.remove("hide");
