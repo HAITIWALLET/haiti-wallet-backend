@@ -141,8 +141,9 @@ def impersonate_user(
         raise HTTPException(status_code=404, detail="Utilisateur introuvable")
 
     if user.role == "superadmin":
-        raise HTTPException(status_code=403, detail="Impossible d'impersoner un superadmin")
+        raise HTTPException(status_code=403, detail="Impossible d'impersonate un superadmin")
 
-    access_token = create_access_token({"sub": user.email})
+    access_token = create_access_token(user.email)
 
     return {"access_token": access_token}
+
