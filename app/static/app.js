@@ -1,3 +1,16 @@
+// ----- Gestion impersonate via URL -----
+const urlParams = new URLSearchParams(window.location.search);
+const impersonateToken = urlParams.get("impersonate");
+
+if (impersonateToken) {
+  localStorage.setItem("token", impersonateToken);
+
+  // Nettoyer l'URL sans casser le chemin
+  window.history.replaceState({}, document.title, "/static/index.html");
+
+  location.reload();
+}
+
 // app/static/app.js
 // HaitiWallet — app.js (clean + complet) ✅
 // Fix: doublons (renderBalances), IDs register/login, API undefined, admin tab pour admin+superadmin,
@@ -1358,14 +1371,8 @@ function wireSuperadminButtons() {
 
     const j = await res.json();
 
-    // Ouvre nouvel onglet vide
-    const newTab = window.open("", "_blank");
-
-    // Injecte token avant chargement
-    newTab.localStorage.setItem("token", j.access_token);
-
-    // Charge l'app
-    newTab.location.href = "/static/index.html";
+    // OUVRE NOUVEL ONGLET AVEC TOKEN DANS URL
+    window.open(`/static/index.html?impersonate=${j.access_token}`, "_blank");
   };
 });
 
