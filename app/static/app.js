@@ -2,20 +2,6 @@
 // HaitiWallet — app.js (clean + complet) ✅
 // Fix: doublons (renderBalances), IDs register/login, API undefined, admin tab pour admin+superadmin,
 // Superadmin UI cohérente, wiring centralisé, register via /auth/register.
-
-// Gestion token via URL (impersonate)
-const urlParams = new URLSearchParams(window.location.search);
-const impersonateToken = urlParams.get("impersonate");
-
-if (impersonateToken) {
-  localStorage.setItem("token", impersonateToken);
-
-  // Nettoyer l'URL proprement vers ton vrai index
-  window.history.replaceState({}, document.title, "/static/index.html");
-
-  location.reload();
-}
-
 let token = localStorage.getItem("token") || "";
 let superadminToken = localStorage.getItem("superadmin_token") || "";
 let me = null;
@@ -1372,10 +1358,16 @@ function wireSuperadminButtons() {
 
     const j = await res.json();
 
-    // On ouvre avec token dans l'URL
-    window.open(`/static/index.html?impersonate=${j.access_token}`, "_blank");
-    };
-  });
+    // Ouvre nouvel onglet vide
+    const newTab = window.open("", "_blank");
+
+    // Injecte token avant chargement
+    newTab.localStorage.setItem("token", j.access_token);
+
+    // Charge l'app
+    newTab.location.href = "/static/index.html";
+  };
+});
 
   // VIEW POPUP
   document.querySelectorAll("[data-view]").forEach(btn => {
