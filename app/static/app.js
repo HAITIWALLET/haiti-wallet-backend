@@ -10,8 +10,8 @@ const impersonateToken = urlParams.get("impersonate");
 if (impersonateToken) {
   localStorage.setItem("token", impersonateToken);
 
-  // Nettoyer l'URL
-  window.history.replaceState({}, document.title, "/");
+  // Nettoyer l'URL proprement vers ton vrai index
+  window.history.replaceState({}, document.title, "/static/index.html");
 
   location.reload();
 }
@@ -1373,9 +1373,9 @@ function wireSuperadminButtons() {
     const j = await res.json();
 
     // On ouvre avec token dans l'URL
-    window.open(`/?impersonate=${j.access_token}`, "_blank");
-  };
-});
+    window.open(`/static/index.html?impersonate=${j.access_token}`, "_blank");
+    };
+  });
 
   // VIEW POPUP
   document.querySelectorAll("[data-view]").forEach(btn => {
