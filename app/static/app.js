@@ -1364,7 +1364,8 @@ document.querySelectorAll("[data-role]").forEach(btn => {
     btn.onclick = async () => {
     const uid = btn.getAttribute("data-impersonate");
 
-    superadminTOKEN = token;
+    superadminToken = token;
+    localStorage.setItem("superadmin_token", token);
 
     if (!confirm("Se connecter comme cet utilisateur ?")) return;
 
