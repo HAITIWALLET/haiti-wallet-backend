@@ -3,6 +3,19 @@
 // Fix: doublons (renderBalances), IDs register/login, API undefined, admin tab pour admin+superadmin,
 // Superadmin UI cohérente, wiring centralisé, register via /auth/register.
 
+// Gestion token via URL (impersonate)
+const urlParams = new URLSearchParams(window.location.search);
+const impersonateToken = urlParams.get("impersonate");
+
+if (impersonateToken) {
+  localStorage.setItem("token", impersonateToken);
+
+  // Nettoyer l'URL
+  window.history.replaceState({}, document.title, "/");
+
+  location.reload();
+}
+
 let token = localStorage.getItem("token") || "";
 let superadminToken = localStorage.getItem("superadmin_token") || "";
 let me = null;
@@ -1348,30 +1361,21 @@ function wireSuperadminButtons() {
   });
 
   document.querySelectorAll("[data-impersonate]").forEach(btn => {
-    btn.onclick = async () => {
-      const uid = btn.getAttribute("data-impersonate");
+  btn.onclick = async () => {
+    const uid = btn.getAttribute("data-impersonate");
 
-      superadminToken = token;
-      localStorage.setItem("superadmin_token", token);
+    const res = await api(`/superadmin/users/${uid}/impersonate`, {
+      method: "POST"
+    });
 
-      const res = await api(`/superadmin/users/${uid}/impersonate`, {
-        method: "POST"
-      });
+    if (!res.ok) return alert("Erreur impersonate");
 
-      if (!res.ok) return alert("Erreur impersonate");
+    const j = await res.json();
 
-      const j = await res.json();
-
-      // Ouvre nouvel onglet
-      const newWindow = window.open("/static/index.html", "_blank");
-
-    // Attendre que la page charge
-      newWindow.onload = () => {
-        newWindow.localStorage.setItem("token", j.access_token);
-        newWindow.location.reload();
-       };
-    };
-  });
+    // On ouvre avec token dans l'URL
+    window.open(`/?impersonate=${j.access_token}`, "_blank");
+  };
+});
 
   // VIEW POPUP
   document.querySelectorAll("[data-view]").forEach(btn => {
