@@ -5,11 +5,11 @@ const impersonateToken = urlParams.get("impersonate");
 if (impersonateToken) {
     localStorage.setItem("token", impersonateToken);
 
-    // Nettoie l’URL
+    // Nettoie l'URL
     window.history.replaceState({}, document.title, "/static/index.html");
 
-    // Recharge UNE seule fois avec le nouveau token
-    window.location.href = "/static/index.html#dashboard";
+    // Force un redémarrage propre avec le nouveau token
+    window.location.reload();
 }
 
 // app/static/app.js
