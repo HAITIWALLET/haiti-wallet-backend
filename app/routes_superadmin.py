@@ -70,10 +70,16 @@ def set_user_role(
 # CHANGE STATUS
 # =========================================================
 
+from pydantic import BaseModel
+
+class StatusUpdate(BaseModel):
+    status: str
+
+
 @router.post("/users/{user_id}/status")
 def change_status(
     user_id: int,
-    status: str,
+    data: StatusUpdate,
     db: Session = Depends(get_db),
     sa: User = Depends(require_superadmin),
 ):
@@ -85,13 +91,14 @@ def change_status(
     if user.role == "superadmin":
         raise HTTPException(status_code=403, detail="Impossible de modifier un superadmin")
 
-    if status not in ["active", "suspended", "banned"]:
+    if data.status not in ["active", "suspended", "banned"]:
         raise HTTPException(status_code=400, detail="Statut invalide")
 
-    user.status = status
+    user.status = data.status
     db.commit()
 
-    return {"message": f"Statut changé en {status}"}
+    return {"message": f"Statut changé en {data.status}"}
+
 
 
 # =========================================================
