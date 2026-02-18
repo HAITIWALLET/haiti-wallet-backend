@@ -3,10 +3,13 @@ const urlParams = new URLSearchParams(window.location.search);
 const impersonateToken = urlParams.get("impersonate");
 
 if (impersonateToken) {
-  localStorage.setItem("token", impersonateToken);
+    localStorage.setItem("token", impersonateToken);
 
-  // Nettoie l’URL sans recharger une seconde fois
-  window.history.replaceState({}, document.title, "/static/index.html");
+    // Nettoie l’URL
+    window.history.replaceState({}, document.title, "/static/index.html");
+
+    // Recharge UNE seule fois avec le nouveau token
+    window.location.href = "/static/index.html#dashboard";
 }
 
 // app/static/app.js
