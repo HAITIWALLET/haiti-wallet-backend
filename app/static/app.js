@@ -8,8 +8,8 @@ if (impersonateToken) {
     // Nettoie l'URL
     window.history.replaceState({}, document.title, "/static/index.html");
 
-    // Force un redémarrage propre avec le nouveau token
-    window.location.reload();
+    // Recharge COMPLETEMENT sans cache
+    window.location.href = "/static/index.html?reload=" + Date.now();
 }
 
 // app/static/app.js
