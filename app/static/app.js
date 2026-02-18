@@ -1361,11 +1361,15 @@ function wireSuperadminButtons() {
       if (!res.ok) return alert("Erreur impersonate");
 
       const j = await res.json();
-      token = j.access_token;
-      localStorage.setItem("token", token);
 
-      await refreshAll();
-      showTab("dashboard");
+      // Ouvre nouvel onglet
+      const newWindow = window.open("/static/index.html", "_blank");
+
+    // Attendre que la page charge
+      newWindow.onload = () => {
+        newWindow.localStorage.setItem("token", j.access_token);
+        newWindow.location.reload();
+       };
     };
   });
 
