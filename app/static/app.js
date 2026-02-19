@@ -1236,7 +1236,13 @@ function renderSuperadminUsers() {
 
   tbody.innerHTML = "";
 
-const visible = superadminUsers.slice(0, superadminVisibleCount);
+const search = $("saSearch")?.value.toLowerCase() || "";
+
+const filtered = superadminUsers.filter(u =>
+  u.email.toLowerCase().includes(search)
+);
+
+const visible = filtered.slice(0, superadminVisibleCount);
 
 visible.forEach((u, index) => {
   const isSuper = u.role === "superadmin";
@@ -1280,7 +1286,7 @@ visible.forEach((u, index) => {
     const btnMore = $("btnSaMore");
 
 if (btnMore) {
-  if (superadminVisibleCount >= superadminUsers.length) {
+  if (superadminVisibleCount >= filtered.length) { 
     btnMore.style.display = "none";
   } else {
     btnMore.style.display = "block";
