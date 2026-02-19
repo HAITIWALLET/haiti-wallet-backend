@@ -1230,26 +1230,9 @@ function renderSuperadminUsers() {
   const tbody = $("saUsersBody");
   if (!tbody) return;
 
-  const search = ($("saSearch")?.value || "").toLowerCase();
-  let filtered = superadminUsers;
-
-  if (search) {
-    filtered = filtered.filter(u =>
-      (u.email || "").toLowerCase().includes(search)
-    );
-  }
-
-  const limit = superadminPage * SUPERADMIN_PAGE_SIZE;
-  const pageItems = filtered.slice(0, limit);
-
   tbody.innerHTML = "";
 
-  if (pageItems.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5">Aucun résultat</td></tr>`;
-    return;
-  }
-
-  for (const u of pageItems) {
+  for (const u of superadminUsers) {
     const isSuper = u.role === "superadmin";
     const isAdmin = u.role === "admin";
     const pauseLabel = u.status === "suspended" ? "Ouvrir" : "Pause";
@@ -1260,42 +1243,35 @@ function renderSuperadminUsers() {
         <td>${u.email}</td>
         <td>${u.role}</td>
         <td>${u.status}</td>
-        <td style="position:relative">
-
-          ${isSuper ? `
-            <span class="muted">Protégé</span>
-          ` : `
-            <button class="menuBtn" data-menu="${u.id}">⋮</button>
-
-            <div class="userMenu hide" id="menu-${u.id}">
-              <button data-role="${u.id}">
-                ${isAdmin ? "Retirer admin" : "Admin"}
-              </button>
-
-              <button data-pause="${u.id}">
-                ${pauseLabel}
-              </button>
-
-              <button data-ban="${u.id}">
-                Ban
-              </button>
-
-              <button data-delete="${u.id}">
-                Supprimer
-              </button>
-
-              <button data-impersonate="${u.id}">
-                Login
-              </button>
-            </div>
-          `}
+        <td style="position:relative;">
+          ${
+            isSuper
+              ? `<span class="muted">Protégé</span>`
+              : `
+                <button class="menuBtn" data-menu="${u.id}">⋮</button>
+                <div class="userMenu hide" id="menu-${u.id}">
+                  <button data-role="${u.id}">
+                    ${isAdmin ? "Retirer admin" : "Admin"}
+                  </button>
+                  <button data-pause="${u.id}">
+                    ${pauseLabel}
+                  </button>
+                  <button data-ban="${u.id}">
+                    Ban
+                  </button>
+                  <button data-delete="${u.id}">
+                    Supprimer
+                  </button>
+                  <button data-impersonate="${u.id}">
+                    Login
+                  </button>
+                </div>
+              `
+          }
         </td>
       </tr>
     `;
   }
-
-  $("btnSaMore").style.display =
-    limit >= filtered.length ? "none" : "inline-block";
 
   wireUserMenus();
   wireSuperadminButtons();
@@ -1303,22 +1279,22 @@ function renderSuperadminUsers() {
 
 function wireUserMenus() {
   document.querySelectorAll("[data-menu]").forEach(btn => {
-    btn.onclick = () => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+
+      // Ferme tous les autres menus
+      document.querySelectorAll(".userMenu").forEach(m => m.classList.add("hide"));
+
       const id = btn.getAttribute("data-menu");
       const menu = document.getElementById("menu-" + id);
-
-      document.querySelectorAll(".userMenu").forEach(m => {
-        if (m !== menu) m.classList.add("hide");
-      });
 
       menu.classList.toggle("hide");
     };
   });
 
-  document.addEventListener("click", e => {
-    if (!e.target.closest(".menuBtn") && !e.target.closest(".userMenu")) {
-      document.querySelectorAll(".userMenu").forEach(m => m.classList.add("hide"));
-    }
+  // Ferme si on clique ailleurs
+  document.addEventListener("click", () => {
+    document.querySelectorAll(".userMenu").forEach(m => m.classList.add("hide"));
   });
 }
 
