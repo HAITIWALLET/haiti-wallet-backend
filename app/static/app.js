@@ -18,7 +18,7 @@ if (impersonateToken) {
 // Superadmin UI cohérente, wiring centralisé, register via /auth/register.
 let token = localStorage.getItem("token") || "";
 
-if (!token && !window.location.search.includes("impersonate")) {
+if (!token && !window.location.pathname.includes("index.html")) {
   window.location.href = "/static/index.html";
 }
 let superadminToken = localStorage.getItem("superadmin_token") || "";
@@ -1457,6 +1457,23 @@ function restoreSuperadmin() {
   refreshAll();
 }
 
+// AUTO LOGIN SI TOKEN EXISTE
+document.addEventListener("DOMContentLoaded", async () => {
+  const savedToken = localStorage.getItem("token");
+  if (savedToken) {
+    try {
+      token = savedToken;
+      await refreshAll();
+
+      $("loginBox")?.classList.add("hide");
+      $("appBox")?.classList.remove("hide");
+
+      showTab(tabFromHash());
+    } catch (e) {
+  console.error("Auto login failed:", e);
+}
+  }
+});
 
 /* ---------------------------
    EVENTS

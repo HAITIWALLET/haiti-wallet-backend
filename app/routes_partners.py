@@ -10,7 +10,7 @@ from .security import get_current_user
 router = APIRouter(prefix="/partners", tags=["partners"])
 
 def require_admin(user):
-    if getattr(user, "role", None) != "admin":
+    if getattr(user, "role", None) not in ["admin", "superadmin"]:
         raise HTTPException(status_code=403, detail="Admin seulement")
 
 # PUBLIC: liste des partenaires actifs (pour users)
