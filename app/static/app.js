@@ -1457,6 +1457,14 @@ function restoreSuperadmin() {
   refreshAll();
 }
 
+document.addEventListener("DOMContentLoaded", () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("superadmin_token");
+
+  $("loginBox")?.classList.remove("hide");
+  $("appBox")?.classList.add("hide");
+});
+
 /* ---------------------------
    EVENTS
 --------------------------- */
@@ -1483,7 +1491,13 @@ $("btnLogin") &&
   });
 
 // Logout
-$("btnLogout") && ($("btnLogout").onclick = () => location.reload());
+// Logout propre
+$("btnLogout") && ($("btnLogout").onclick = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("superadmin_token");
+  token = "";
+  window.location.href = "/static/index.html";
+});
 
 // Buttons
 $("btnCopyRef") && ($("btnCopyRef").onclick = copyRefCode);
