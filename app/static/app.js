@@ -1239,6 +1239,7 @@ function renderSuperadminUsers() {
 const visible = superadminUsers.slice(0, superadminVisibleCount);
 
 visible.forEach((u, index) => {
+  const isSuper = u.role === "superadmin";
     const isAdmin = u.role === "admin";
     const pauseLabel = u.status === "suspended" ? "Ouvrir" : "Pause";
 
