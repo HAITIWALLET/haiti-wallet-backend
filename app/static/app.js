@@ -1457,12 +1457,26 @@ function restoreSuperadmin() {
   refreshAll();
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("superadmin_token");
+document.addEventListener("DOMContentLoaded", async () => {
+  const savedToken = localStorage.getItem("token");
 
-  $("loginBox")?.classList.remove("hide");
-  $("appBox")?.classList.add("hide");
+  if (!savedToken) {
+    $("loginBox")?.classList.remove("hide");
+    $("appBox")?.classList.add("hide");
+    return;
+  }
+
+  try {
+    token = savedToken;
+    await refreshAll();
+
+    $("loginBox")?.classList.add("hide");
+    $("appBox")?.classList.remove("hide");
+  } catch (e) {
+    localStorage.removeItem("token");
+    $("loginBox")?.classList.remove("hide");
+    $("appBox")?.classList.add("hide");
+  }
 });
 
 /* ---------------------------
