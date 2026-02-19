@@ -1146,9 +1146,10 @@ function injectSuperadminBox() {
    SUPERADMIN — VERSION STABLE PROPRE
 ========================================================= */
 
-const SUPERADMIN_PAGE_SIZE = 10;
+const SUPERADMIN_PAGE_SIZE = 5;
 let superadminUsers = [];
 let superadminPage = 1;
+let superadminVisibleCount = 5;
 
 /* ---------- UI Injection ---------- */
 
@@ -1193,10 +1194,6 @@ function injectSuperadminBox() {
   tabAdmin.insertBefore(card, tabAdmin.firstChild);
 
   $("btnSaRefresh").onclick = loadUsersSuperadmin;
-  $("btnSaMore").onclick = () => {
-    superadminPage++;
-    renderSuperadminUsers();
-  };
 
   $("saSearch").addEventListener("input", () => {
     superadminPage = 1;
@@ -1221,6 +1218,7 @@ async function loadUsersSuperadmin() {
 
   superadminUsers = await res.json();
   superadminPage = 1;
+  superadminVisibleCount = SUPERADMIN_PAGE_SIZE;
   renderSuperadminUsers();
 }
 
@@ -1232,8 +1230,9 @@ function renderSuperadminUsers() {
 
   tbody.innerHTML = "";
 
-  superadminUsers.forEach((u, index) => { 
-    const isSuper = u.role === "superadmin";
+const visible = superadminUsers.slice(0, superadminVisibleCount);
+
+visible.forEach((u, index) => {
     const isAdmin = u.role === "admin";
     const pauseLabel = u.status === "suspended" ? "Ouvrir" : "Pause";
 
@@ -1271,6 +1270,15 @@ function renderSuperadminUsers() {
         </td>
       </tr>
     `;
+    const btnMore = $("btnSaMore");
+
+if (btnMore) {
+  if (superadminVisibleCount >= superadminUsers.length) {
+    btnMore.style.display = "none";
+  } else {
+    btnMore.style.display = "block";
+  }
+}
   });
 
   wireUserMenus();
@@ -1525,6 +1533,12 @@ $("btnMyTopups2") && ($("btnMyTopups2").onclick = loadMyTopups);
 $("btnAdminRefresh") && ($("btnAdminRefresh").onclick = loadPendingTopups);
 
 $("btnCopyPay") && ($("btnCopyPay").onclick = copyPayToClipboard);
+
+$("btnSaMore") && ($("btnSaMore").onclick = () => {
+  superadminVisibleCount += SUPERADMIN_PAGE_SIZE;
+  renderSuperadminUsers();
+});
+
 
 // export
 $("btnExportTxCsv") && ($("btnExportTxCsv").onclick = exportWalletTxCsv);
