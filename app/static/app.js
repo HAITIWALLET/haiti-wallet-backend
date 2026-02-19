@@ -1194,6 +1194,12 @@ function injectSuperadminBox() {
   tabAdmin.insertBefore(card, tabAdmin.firstChild);
 
   $("btnSaRefresh").onclick = loadUsersSuperadmin;
+  $("btnSaMore") && ($("btnSaMore").onclick = () => {
+  superadminVisibleCount += SUPERADMIN_PAGE_SIZE;
+  renderSuperadminUsers();
+});
+
+loadUsersSuperadmin();
 
   $("saSearch").addEventListener("input", () => {
     superadminPage = 1;
