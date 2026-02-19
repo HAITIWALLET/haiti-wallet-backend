@@ -1232,14 +1232,14 @@ function renderSuperadminUsers() {
 
   tbody.innerHTML = "";
 
-  for (const u of superadminUsers) {
+  superadminUsers.forEach((u, index) => { 
     const isSuper = u.role === "superadmin";
     const isAdmin = u.role === "admin";
     const pauseLabel = u.status === "suspended" ? "Ouvrir" : "Pause";
 
     tbody.innerHTML += `
       <tr>
-        <td>${u.id}</td>
+        <td>${index + 1}</td>
         <td>${u.email}</td>
         <td>${u.role}</td>
         <td>${u.status}</td>
@@ -1271,7 +1271,7 @@ function renderSuperadminUsers() {
         </td>
       </tr>
     `;
-  }
+  });
 
   wireUserMenus();
   wireSuperadminButtons();
