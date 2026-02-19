@@ -8,7 +8,7 @@ if (impersonateToken) {
     // Nettoie l'URL
     window.history.replaceState({}, document.title, "/static/index.html");
 
-    // Recharge COMPLETEMENT sans cache
+    // Recharge complètement sans cache
     window.location.href = "/static/index.html?reload=" + Date.now();
 }
 
@@ -17,6 +17,10 @@ if (impersonateToken) {
 // Fix: doublons (renderBalances), IDs register/login, API undefined, admin tab pour admin+superadmin,
 // Superadmin UI cohérente, wiring centralisé, register via /auth/register.
 let token = localStorage.getItem("token") || "";
+
+if (!token && !window.location.search.includes("impersonate")) {
+  window.location.href = "/static/index.html";
+}
 let superadminToken = localStorage.getItem("superadmin_token") || "";
 let me = null;
 let fx = { sell_usd: 134.0, buy_usd: 126.0 };
