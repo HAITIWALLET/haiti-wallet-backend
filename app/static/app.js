@@ -1231,7 +1231,6 @@ function renderSuperadminUsers() {
   if (!tbody) return;
 
   const search = ($("saSearch")?.value || "").toLowerCase();
-
   let filtered = superadminUsers;
 
   if (search) {
@@ -1261,32 +1260,35 @@ function renderSuperadminUsers() {
         <td>${u.email}</td>
         <td>${u.role}</td>
         <td>${u.status}</td>
-        <td>
-          ${isSuper ? 
-            `<span class="muted">Protégé</span>` 
-            :
-            `
-            <button data-role="${u.id}">
-              ${isAdmin ? "Retirer admin" : "Admin"}
-            </button>
+        <td style="position:relative">
 
-            <button data-pause="${u.id}">
-              ${pauseLabel}
-            </button>
+          ${isSuper ? `
+            <span class="muted">Protégé</span>
+          ` : `
+            <button class="menuBtn" data-menu="${u.id}">⋮</button>
 
-            <button data-ban="${u.id}">
-              Ban
-            </button>
+            <div class="userMenu hide" id="menu-${u.id}">
+              <button data-role="${u.id}">
+                ${isAdmin ? "Retirer admin" : "Admin"}
+              </button>
 
-            <button data-delete="${u.id}">
-              Supprimer
-            </button>
+              <button data-pause="${u.id}">
+                ${pauseLabel}
+              </button>
 
-            <button data-impersonate="${u.id}">
-              Login
-            </button>
-            `
-          }
+              <button data-ban="${u.id}">
+                Ban
+              </button>
+
+              <button data-delete="${u.id}">
+                Supprimer
+              </button>
+
+              <button data-impersonate="${u.id}">
+                Login
+              </button>
+            </div>
+          `}
         </td>
       </tr>
     `;
@@ -1295,7 +1297,29 @@ function renderSuperadminUsers() {
   $("btnSaMore").style.display =
     limit >= filtered.length ? "none" : "inline-block";
 
+  wireUserMenus();
   wireSuperadminButtons();
+}
+
+function wireUserMenus() {
+  document.querySelectorAll("[data-menu]").forEach(btn => {
+    btn.onclick = () => {
+      const id = btn.getAttribute("data-menu");
+      const menu = document.getElementById("menu-" + id);
+
+      document.querySelectorAll(".userMenu").forEach(m => {
+        if (m !== menu) m.classList.add("hide");
+      });
+
+      menu.classList.toggle("hide");
+    };
+  });
+
+  document.addEventListener("click", e => {
+    if (!e.target.closest(".menuBtn") && !e.target.closest(".userMenu")) {
+      document.querySelectorAll(".userMenu").forEach(m => m.classList.add("hide"));
+    }
+  });
 }
 
 /* ---------- Buttons ---------- */
