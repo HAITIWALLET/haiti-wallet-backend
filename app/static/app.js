@@ -1830,7 +1830,7 @@ if (backToApp) {
 }
 
 async function loadProfile() {
-  const res = await api("/me");
+  const res = await api("/auth/me");
   if (!res.ok) return;
 
   const user = await res.json();
@@ -1845,13 +1845,14 @@ const saveProfile = document.getElementById("saveProfile");
 
 if (saveProfile) {
   saveProfile.addEventListener("click", async () => {
-    await api("/me", {
+    await api("/auth/me", {
       method: "PUT",
       body: JSON.stringify({
-        name: document.getElementById("profileName").value,
-        phone: document.getElementById("profilePhone").value,
-        address: document.getElementById("profileAddress").value
-      })
+  first_name: document.getElementById("profileFirstName").value,
+  last_name: document.getElementById("profileLastName").value,
+  phone: document.getElementById("profilePhone").value,
+  address: document.getElementById("profileAddress").value
+})
     });
 
     alert("Profil mis à jour");

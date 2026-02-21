@@ -279,3 +279,23 @@ def me(user: User = Depends(get_current_user)):
             "usd": float(user.wallet.usd) if user.wallet else 0.0,
         },
     )
+
+from fastapi import Depends
+from sqlalchemy.orm import Session
+from app.db import get_db   # adapte si chemin différent
+
+@router.put("/me")
+def update_me(
+    data: dict,
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    user.first_name = data.get("first_name", user.first_name)
+    user.last_name = data.get("last_name", user.last_name)
+    user.phone = data.get("phone", user.phone)
+    user.address = data.get("address", user.address)
+
+    db.commit()
+    db.refresh(user)
+
+    return {"success": True}
