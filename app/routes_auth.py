@@ -293,7 +293,6 @@ def update_me(
     user.first_name = data.get("first_name", user.first_name)
     user.last_name = data.get("last_name", user.last_name)
     user.phone = data.get("phone", user.phone)
-    user.address = data.get("address", user.address)
 
     db.commit()
     db.refresh(user)
