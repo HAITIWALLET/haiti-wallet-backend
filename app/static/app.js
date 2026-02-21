@@ -1808,3 +1808,52 @@ if (profileToggle && profileDropdown) {
     }
   });
 }
+
+const goProfile = document.getElementById("goProfile");
+const profileSection = document.getElementById("profileSection");
+const appBox = document.getElementById("appBox");
+const backToApp = document.getElementById("backToApp");
+
+if (goProfile && profileSection && appBox) {
+  goProfile.addEventListener("click", async () => {
+    appBox.classList.add("hide");
+    profileSection.classList.remove("hide");
+    await loadProfile();
+  });
+}
+
+if (backToApp) {
+  backToApp.addEventListener("click", () => {
+    profileSection.classList.add("hide");
+    appBox.classList.remove("hide");
+  });
+}
+
+async function loadProfile() {
+  const res = await api("/me");
+  if (!res.ok) return;
+
+  const user = await res.json();
+
+  document.getElementById("profileName").value = user.name || "";
+  document.getElementById("profileEmail").value = user.email || "";
+  document.getElementById("profilePhone").value = user.phone || "";
+  document.getElementById("profileAddress").value = user.address || "";
+}
+
+const saveProfile = document.getElementById("saveProfile");
+
+if (saveProfile) {
+  saveProfile.addEventListener("click", async () => {
+    await api("/me", {
+      method: "PUT",
+      body: JSON.stringify({
+        name: document.getElementById("profileName").value,
+        phone: document.getElementById("profilePhone").value,
+        address: document.getElementById("profileAddress").value
+      })
+    });
+
+    alert("Profil mis à jour");
+  });
+}
