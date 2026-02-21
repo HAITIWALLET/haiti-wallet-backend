@@ -1861,7 +1861,7 @@ if (saveProfile) {
   });
 }
 
-window.addEventListener("load", () => {
+// window.addEventListener("load", () => {
   const hash = window.location.hash.replace("#", "");
 
   document.querySelectorAll(".section").forEach(s =>
@@ -1881,4 +1881,4 @@ window.addEventListener("load", () => {
   if (section) {
     section.classList.remove("hide");
   }
-});
+// });
