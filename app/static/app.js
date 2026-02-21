@@ -1864,13 +1864,14 @@ if (saveProfile) {
 window.addEventListener("load", () => {
   const hash = window.location.hash.replace("#", "");
 
-  if (hash) {
-    const section = document.getElementById("tab-" + hash);
-    if (section) {
-      document.querySelectorAll(".section").forEach(s =>
-        s.classList.add("hide")
-      );
-      section.classList.remove("hide");
-    }
-  }
+  if (!hash) return;
+
+  const section = document.getElementById("tab-" + hash);
+  if (!section) return;   // ← sécurité importante
+
+  document.querySelectorAll(".section").forEach(s =>
+    s.classList.add("hide")
+  );
+
+  section.classList.remove("hide");
 });
