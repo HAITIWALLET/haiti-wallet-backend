@@ -1860,3 +1860,15 @@ if (saveProfile) {
     alert("Profil mis à jour");
   });
 }
+
+window.addEventListener("load", () => {
+  const hash = window.location.hash.replace("#", "");
+
+  if (hash) {
+    const section = document.getElementById(hash);
+    if (section) {
+      document.querySelectorAll(".section").forEach(s => s.classList.add("hide"));
+      section.classList.remove("hide");
+    }
+  }
+});
