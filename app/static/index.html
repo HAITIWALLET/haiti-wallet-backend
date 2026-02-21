@@ -107,16 +107,68 @@
   background: url("https://cdn-icons-png.flaticon.com/512/565/565655.png") no-repeat center;
   background-size: contain;
 }
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.profile-menu {
+  position: relative;
+}
+
+.profile-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: url("https://cdn-icons-png.flaticon.com/512/149/149071.png") center/cover no-repeat;
+  cursor: pointer;
+}
+
+.profile-dropdown {
+  position: absolute;
+  right: 0;
+  top: 45px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  min-width: 180px;
+  padding: 8px 0;
+  z-index: 1000;
+}
+
+.profile-item {
+  padding: 10px 15px;
+  cursor: pointer;
+}
+
+.profile-item:hover {
+  background: #f2f2f2;
+}
+
+.profile-item.danger {
+  color: red;
+}
 </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
-      <div class="row" style="justify-content:space-between;align-items:center">
-        <h1 style="margin:0">Haiti Wallet</h1>
-        <div id="badge" class="ok hide" style="padding:6px 10px;border-radius:999px">Connecté</div>
-      </div>
+<div class="header">
+  <h1 style="margin:0">Haiti Wallet</h1>
 
+  <div class="profile-menu">
+    <div id="profileToggle" class="profile-icon"></div>
+
+    <div id="profileDropdown" class="profile-dropdown hide">
+      <div class="profile-item" id="goProfile">Mon profil</div>
+      <div class="profile-item" id="goSecurity">Sécurité</div>
+      <div class="profile-item danger" id="deleteAccount">Supprimer mon compte</div>
+      <div class="profile-item" id="logoutAccount">Se déconnecter</div>
+    </div>
+  </div>
+</div>
       <!-- LOGIN + REGISTER (TOGGLE) -->
       <div id="loginBox" class="section">
         <div class="authTabs">

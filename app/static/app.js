@@ -1793,3 +1793,18 @@ if (toggleRegister && registerPasswordInput) {
     toggleRegister.classList.toggle("hidden", isHidden);
   });
 }
+
+const profileToggle = document.getElementById("profileToggle");
+const profileDropdown = document.getElementById("profileDropdown");
+
+if (profileToggle && profileDropdown) {
+  profileToggle.addEventListener("click", () => {
+    profileDropdown.classList.toggle("hide");
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!profileToggle.contains(e.target) && !profileDropdown.contains(e.target)) {
+      profileDropdown.classList.add("hide");
+    }
+  });
+}
