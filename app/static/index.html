@@ -86,9 +86,6 @@
     .authTab{padding:10px 12px;border-radius:999px;background:#eef2ff;color:#1e3a8a;font-weight:900}
     .authTab.active{background:#1e3a8a;color:#fff}
   </style>
-  #togglePassword {
-  cursor: pointer;
-}
   <style>
 .password-wrapper {
   position: relative;
@@ -104,11 +101,11 @@
   cursor: pointer;
   background: url("https://cdn-icons-png.flaticon.com/512/159/159604.png") no-repeat center;
   background-size: contain;
-  opacity: 0.6;
 }
 
-.password-wrapper .eye:hover {
-  opacity: 1;
+.password-wrapper .eye.hidden {
+  background: url("https://cdn-icons-png.flaticon.com/512/565/565655.png") no-repeat center;
+  background-size: contain;
 }
 </style>
 </head>

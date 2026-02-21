@@ -1772,11 +1772,11 @@ const passwordInput = document.getElementById("password");
 
 if (toggle && passwordInput) {
   toggle.addEventListener("click", () => {
-    if (passwordInput.type === "password") {
-      passwordInput.type = "text";
-    } else {
-      passwordInput.type = "password";
-    }
+    const isHidden = passwordInput.type === "password";
+
+    passwordInput.type = isHidden ? "text" : "password";
+
+    toggle.classList.toggle("hidden", !isHidden);
   });
 }
 
