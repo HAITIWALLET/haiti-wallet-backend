@@ -1861,56 +1861,30 @@ if (saveProfile) {
   });
 }
 
-// window.addEventListener("load", () => {
-  const hash = window.location.hash.replace("#", "");
-
-  document.querySelectorAll(".section").forEach(s =>
-    s.classList.add("hide")
-  );
-
-  let section = null;
-
-  if (hash) {
-    section = document.getElementById("tab-" + hash);
-  }
-
-  if (!section) {
-    section = document.getElementById("tab-dashboard");
-  }
-
-  if (section) {
-    section.classList.remove("hide");
-  }
-// });
+// === NAVIGATION SIMPLE ET PROPRE ===
 
 function showSection(id) {
-  document.querySelectorAll(".section").forEach(s =>
-    s.classList.add("hide")
-  );
+  document.querySelectorAll('[id^="tab-"]').forEach(sec => {
+    sec.classList.add("hide");
+  });
 
-  const section = document.getElementById(id);
-  if (section) {
-    section.classList.remove("hide");
+  const target = document.getElementById("tab-" + id);
+  if (target) {
+    target.classList.remove("hide");
   }
 }
 
-document.getElementById("tabBtn-dashboard")
-  ?.addEventListener("click", () => showSection("tab-dashboard"));
+// Dashboard par défaut
+showSection("dashboard");
 
-document.getElementById("tabBtn-topup")
-  ?.addEventListener("click", () => showSection("tab-topup"));
+// Boutons menu
+const sections = ["dashboard","topup","transfer","history","partners","info","admin"];
 
-document.getElementById("tabBtn-transfer")
-  ?.addEventListener("click", () => showSection("tab-transfer"));
-
-document.getElementById("tabBtn-history")
-  ?.addEventListener("click", () => showSection("tab-history"));
-
-document.getElementById("tabBtn-partners")
-  ?.addEventListener("click", () => showSection("tab-partners"));
-
-document.getElementById("tabBtn-info")
-  ?.addEventListener("click", () => showSection("tab-info"));
-
-document.getElementById("tabBtn-admin")
-  ?.addEventListener("click", () => showSection("tab-admin"));
+sections.forEach(name => {
+  const btn = document.getElementById("tabBtn-" + name);
+  if (btn) {
+    btn.addEventListener("click", () => {
+      showSection(name);
+    });
+  }
+});
