@@ -1766,13 +1766,17 @@ console.log("HaitiWallet app.js loaded — clean_full_v1");
 // Initial tab activation
 showTab(tabFromHash());
 
-function showPassword(id) {
-  const input = document.getElementById(id);
-  if (input) input.type = "text";
-}
+// Toggle mot de passe mobile + desktop
+const toggle = document.getElementById("togglePassword");
+const passwordInput = document.getElementById("password");
 
-function hidePassword(id) {
-  const input = document.getElementById(id);
-  if (input) input.type = "password";
+if (toggle && passwordInput) {
+  toggle.addEventListener("click", () => {
+    if (passwordInput.type === "password") {
+      passwordInput.type = "text";
+    } else {
+      passwordInput.type = "password";
+    }
+  });
 }
 

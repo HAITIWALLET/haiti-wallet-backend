@@ -86,6 +86,9 @@
     .authTab{padding:10px 12px;border-radius:999px;background:#eef2ff;color:#1e3a8a;font-weight:900}
     .authTab.active{background:#1e3a8a;color:#fff}
   </style>
+  #togglePassword {
+  cursor: pointer;
+}
   <style>
 .password-wrapper {
   position: relative;
@@ -131,11 +134,7 @@
             <input id="email" placeholder="Email" />
           <div class="password-wrapper">
             <input id="password" type="password" placeholder="Mot de passe" />
-            <span class="eye"
-            onmousedown="showPassword('password')"
-            onmouseup="hidePassword('password')"
-            onmouseleave="hidePassword('password')">
-            </span>
+            <span id="togglePassword" class="eye"></span>
           </div>
           </div>
           <div style="height:10px"></div>
