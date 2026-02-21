@@ -1780,3 +1780,16 @@ if (toggle && passwordInput) {
   });
 }
 
+// Toggle password REGISTER
+const toggleRegister = document.getElementById("toggleRegisterPassword");
+const registerPasswordInput = document.getElementById("registerPassword");
+
+if (toggleRegister && registerPasswordInput) {
+  toggleRegister.addEventListener("click", () => {
+    const isHidden = registerPasswordInput.type === "password";
+
+    registerPasswordInput.type = isHidden ? "text" : "password";
+
+    toggleRegister.classList.toggle("hidden", isHidden);
+  });
+}
