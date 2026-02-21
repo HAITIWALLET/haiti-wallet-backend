@@ -1864,14 +1864,21 @@ if (saveProfile) {
 window.addEventListener("load", () => {
   const hash = window.location.hash.replace("#", "");
 
-  if (!hash) return;
-
-  const section = document.getElementById("tab-" + hash);
-  if (!section) return;   // ← sécurité importante
-
   document.querySelectorAll(".section").forEach(s =>
     s.classList.add("hide")
   );
 
-  section.classList.remove("hide");
+  let section = null;
+
+  if (hash) {
+    section = document.getElementById("tab-" + hash);
+  }
+
+  if (!section) {
+    section = document.getElementById("tab-dashboard");
+  }
+
+  if (section) {
+    section.classList.remove("hide");
+  }
 });
