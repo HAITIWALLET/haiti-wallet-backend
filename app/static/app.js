@@ -1882,3 +1882,35 @@ if (saveProfile) {
     section.classList.remove("hide");
   }
 // });
+
+function showSection(id) {
+  document.querySelectorAll(".section").forEach(s =>
+    s.classList.add("hide")
+  );
+
+  const section = document.getElementById(id);
+  if (section) {
+    section.classList.remove("hide");
+  }
+}
+
+document.getElementById("tabBtn-dashboard")
+  ?.addEventListener("click", () => showSection("tab-dashboard"));
+
+document.getElementById("tabBtn-topup")
+  ?.addEventListener("click", () => showSection("tab-topup"));
+
+document.getElementById("tabBtn-transfer")
+  ?.addEventListener("click", () => showSection("tab-transfer"));
+
+document.getElementById("tabBtn-history")
+  ?.addEventListener("click", () => showSection("tab-history"));
+
+document.getElementById("tabBtn-partners")
+  ?.addEventListener("click", () => showSection("tab-partners"));
+
+document.getElementById("tabBtn-info")
+  ?.addEventListener("click", () => showSection("tab-info"));
+
+document.getElementById("tabBtn-admin")
+  ?.addEventListener("click", () => showSection("tab-admin"));
