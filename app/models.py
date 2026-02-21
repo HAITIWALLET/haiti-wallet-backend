@@ -18,7 +18,6 @@ class User(Base):
     # identité
     first_name = Column(String, nullable=True)
     last_name = Column(String, nullable=True)
-    address = Column(String, nullable=True)
     phone = Column(String, nullable=True)
     phone_verified = Column(Boolean, default=False)
 

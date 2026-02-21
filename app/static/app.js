@@ -1842,7 +1842,6 @@ async function loadProfile() {
   document.getElementById("profileLastName").value = user.last_name || "";
   document.getElementById("profileEmail").value = user.email || "";
   document.getElementById("profilePhone").value = user.phone || "";
-  document.getElementById("profileAddress").value = user.address || "";
 }
 
 const saveProfile = document.getElementById("saveProfile");
@@ -1855,7 +1854,6 @@ if (saveProfile) {
   first_name: document.getElementById("profileFirstName").value,
   last_name: document.getElementById("profileLastName").value,
   phone: document.getElementById("profilePhone").value,
-  address: document.getElementById("profileAddress").value
 })
     });
 
