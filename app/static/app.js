@@ -1096,6 +1096,9 @@ async function adminAdjustBalance() {
      POST /superadmin/users/{id}/role   body {role}
 --------------------------- */
 function injectSuperadminBox() {
+
+  if (me?.role !== "superadmin") return;
+
   const tabAdmin = $("tab-admin");
   if (!tabAdmin) return;
   if ($("superadminCard")) return;
