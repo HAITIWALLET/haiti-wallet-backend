@@ -1831,11 +1831,15 @@ if (backToApp) {
 
 async function loadProfile() {
   const res = await api("/auth/me");
-  if (!res.ok) return;
+  if (!res.ok) {
+    console.error("Erreur profil");
+    return;
+  }
 
   const user = await res.json();
 
-  document.getElementById("profileName").value = user.name || "";
+  document.getElementById("profileFirstName").value = user.first_name || "";
+  document.getElementById("profileLastName").value = user.last_name || "";
   document.getElementById("profileEmail").value = user.email || "";
   document.getElementById("profilePhone").value = user.phone || "";
   document.getElementById("profileAddress").value = user.address || "";
