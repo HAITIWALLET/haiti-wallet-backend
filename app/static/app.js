@@ -1865,9 +1865,11 @@ window.addEventListener("load", () => {
   const hash = window.location.hash.replace("#", "");
 
   if (hash) {
-    const section = document.getElementById(hash);
+    const section = document.getElementById("tab-" + hash);
     if (section) {
-      document.querySelectorAll(".section").forEach(s => s.classList.add("hide"));
+      document.querySelectorAll(".section").forEach(s =>
+        s.classList.add("hide")
+      );
       section.classList.remove("hide");
     }
   }
