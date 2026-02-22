@@ -1537,6 +1537,10 @@ $("btnLogout") && ($("btnLogout").onclick = () => {
   window.location.href = "/static/index.html";
 });
 
+$("logoutAccount") && ($("logoutAccount").onclick = () => {
+  $("btnLogout") && $("btnLogout").click();
+});
+
 // Buttons
 $("btnCopyRef") && ($("btnCopyRef").onclick = copyRefCode);
 $("btnSend") && ($("btnSend").onclick = sendTransfer);
