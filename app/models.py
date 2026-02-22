@@ -20,6 +20,7 @@ class User(Base):
     last_name = Column(String, nullable=True)
     phone = Column(String, nullable=True)
     phone_verified = Column(Boolean, default=False)
+    profile_image = Column(String, nullable=True)
 
     # parrainage
     ref_code = Column(String, unique=True, index=True)
