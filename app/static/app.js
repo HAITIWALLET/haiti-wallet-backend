@@ -1538,7 +1538,10 @@ $("btnLogout") && ($("btnLogout").onclick = () => {
 });
 
 $("logoutAccount") && ($("logoutAccount").onclick = () => {
-  $("btnLogout") && $("btnLogout").click();
+  localStorage.removeItem("token");
+  localStorage.removeItem("superadmin_token");
+  token = "";
+  window.location.href = "/static/index.html";
 });
 
 // Buttons
