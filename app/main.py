@@ -29,6 +29,18 @@ app = FastAPI(title="Haiti Wallet Backend")
 # DB tables
 Base.metadata.create_all(bind=engine, checkfirst=True)
 
+from sqlalchemy import text
+from sqlalchemy.exc import ProgrammingError
+
+# ---- Auto migration profile_image ----
+try:
+    with engine.connect() as conn:
+        conn.execute(text("ALTER TABLE users ADD COLUMN profile_image TEXT"))
+        conn.commit()
+        print("profile_image column added.")
+except ProgrammingError:
+    print("profile_image column already exists.")
+
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import OperationalError
 from .db import SessionLocal
