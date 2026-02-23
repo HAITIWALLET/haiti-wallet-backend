@@ -1935,3 +1935,11 @@ if (profileInput) {
     }
   });
 }
+
+const plusBtn = document.querySelector(".profile-plus");
+
+if (plusBtn) {
+  plusBtn.addEventListener("click", (e) => {
+    e.stopPropagation(); // empêche ouverture menu
+  });
+}

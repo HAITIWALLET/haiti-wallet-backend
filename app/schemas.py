@@ -72,7 +72,7 @@ class MeOut(BaseModel):
     last_name: Optional[str] = None
     phone: Optional[str] = None
     phone_verified: Optional[bool] = None
-
+    profile_picture: Optional[str] = None
     wallet: Dict[str, float]
 
     class Config:

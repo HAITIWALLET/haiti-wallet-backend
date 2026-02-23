@@ -101,14 +101,30 @@ upload_dir.mkdir(exist_ok=True)
 
 app.mount("/uploads", StaticFiles(directory=str(upload_dir)), name="uploads")
 
+from fastapi import Depends
+from sqlalchemy.orm import Session
+from db import get_db
+from models import User
+from security import get_current_user
+
 @app.post("/upload-profile-picture")
-async def upload_profile_picture(file: UploadFile = File(...)):
-    file_path = upload_dir / file.filename
+async def upload_profile_picture(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    filename = f"user_{current_user.id}.jpg"
+    file_path = upload_dir / filename
 
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    return {"image_url": f"/uploads/{file.filename}"}
+    image_url = f"/uploads/{filename}"
+
+    current_user.profile_picture = image_url
+    db.commit()
+
+    return {"image_url": image_url}
 
 # Root -> UI
 @app.get("/", include_in_schema=False)

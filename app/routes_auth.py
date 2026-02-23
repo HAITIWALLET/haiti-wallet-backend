@@ -274,7 +274,7 @@ def me(user: User = Depends(get_current_user)):
         last_name=user.last_name,
         phone=user.phone,
         phone_verified=user.phone_verified,
-        profile_image=user.profile_image,
+        profile_picture=user.profile_picture,
         wallet={
             "htg": float(user.wallet.htg) if user.wallet else 0.0,
             "usd": float(user.wallet.usd) if user.wallet else 0.0,
@@ -304,23 +304,3 @@ from fastapi import UploadFile, File
 import shutil
 from uuid import uuid4
 import os
-
-@router.post("/me/avatar")
-def upload_avatar(
-    file: UploadFile = File(...),
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    upload_dir = "app/static/uploads"
-    os.makedirs(upload_dir, exist_ok=True)
-
-    filename = f"{uuid4().hex}_{file.filename}"
-    filepath = os.path.join(upload_dir, filename)
-
-    with open(filepath, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    current_user.profile_image = f"/static/uploads/{filename}"
-    db.commit()
-
-    return {"avatar": current_user.profile_image}
