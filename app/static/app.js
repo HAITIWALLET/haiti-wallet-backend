@@ -1804,25 +1804,21 @@ if (toggleRegister && registerPasswordInput) {
   });
 }
 
-const profileToggle = document.getElementById("profileToggle");
+const profileWrapper = document.getElementById("profileToggle");
 const profileDropdown = document.getElementById("profileDropdown");
+const profilePlus = document.querySelector(".profile-plus");
 
-if (profileToggle && profileDropdown) {
-  profileImage.addEventListener("click", (e) => {
-  e.stopPropagation();
-  profileDropdown.classList.toggle("hide");
-});
+if (profileWrapper && profileDropdown) {
 
-const plusBtn = document.querySelector(".profile-plus");
+  profileWrapper.addEventListener("click", (e) => {
+    // Si on clique sur le + → ne pas ouvrir menu
+    if (e.target.classList.contains("profile-plus")) return;
 
-if (plusBtn) {
-  plusBtn.addEventListener("click", (e) => {
-    e.stopPropagation(); // empêche ouverture menu
+    profileDropdown.classList.toggle("hide");
   });
-}
 
   document.addEventListener("click", (e) => {
-    if (!profileToggle.contains(e.target) && !profileDropdown.contains(e.target)) {
+    if (!profileWrapper.contains(e.target) && !profileDropdown.contains(e.target)) {
       profileDropdown.classList.add("hide");
     }
   });
@@ -1916,17 +1912,26 @@ if (profileInput) {
     const file = e.target.files[0];
     if (!file) return;
 
-    // 👇 AJOUT PREVIEW DIRECT
+    // ✅ Preview immédiat
     profileImage.src = URL.createObjectURL(file);
 
     const formData = new FormData();
     formData.append("file", file);
 
-    const res = await fetch("/upload-profile-picture", {
-      method: "POST",
-      body: formData
-    });
+    try {
+      const res = await fetch("/upload-profile-picture", {
+        method: "POST",
+        body: formData
+      });
 
-    console.log(await res.text());
+      const data = await res.json();
+
+      if (data.image_url) {
+        profileImage.src = data.image_url;
+      }
+
+    } catch (err) {
+      console.error("Upload error:", err);
+    }
   });
 }
