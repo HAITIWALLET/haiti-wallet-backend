@@ -103,9 +103,9 @@ app.mount("/uploads", StaticFiles(directory=str(upload_dir)), name="uploads")
 
 from fastapi import Depends
 from sqlalchemy.orm import Session
-from db import get_db
-from models import User
-from security import get_current_user
+from app.db import get_db
+from app.models import User
+from app.security import get_current_user
 
 @app.post("/upload-profile-picture")
 async def upload_profile_picture(
