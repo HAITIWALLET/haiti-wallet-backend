@@ -150,6 +150,36 @@
 .profile-item.danger {
   color: red;
 }
+
+.profile-icon-wrapper {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+}
+
+.profile-icon-img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-plus {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  background: #2563eb;
+  color: white;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 14px;
+  text-align: center;
+  line-height: 18px;
+  font-weight: bold;
+  cursor: pointer;
+}
 </style>
 </head>
 <body>
@@ -158,8 +188,11 @@
 <div class="header">
   <h1 style="margin:0">Haiti Wallet</h1>
 
-  <div class="profile-menu">
-    <div id="profileToggle" class="profile-icon"></div>
+  <div id="profileToggle" class="profile-icon-wrapper">
+  <img id="profileImage" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" class="profile-icon-img">
+  <label for="profileInput" class="profile-plus">+</label>
+  <input type="file" id="profileInput" accept="image/*" hidden>
+</div>
 
     <div id="profileDropdown" class="profile-dropdown hide">
       <div class="profile-item" id="goProfile">Mon profil</div>

@@ -1808,7 +1808,7 @@ const profileToggle = document.getElementById("profileToggle");
 const profileDropdown = document.getElementById("profileDropdown");
 
 if (profileToggle && profileDropdown) {
-  profileToggle.addEventListener("click", () => {
+  profileImage.addEventListener("click", () => {
     profileDropdown.classList.toggle("hide");
   });
 
@@ -1898,3 +1898,27 @@ sections.forEach(name => {
     });
   }
 });
+
+const profileInput = document.getElementById("profileInput");
+const profileImage = document.getElementById("profileImage");
+
+if (profileInput) {
+  profileInput.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch("/upload-profile-picture", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+
+    if (data.image_url) {
+      profileImage.src = data.image_url;
+    }
+  });
+}

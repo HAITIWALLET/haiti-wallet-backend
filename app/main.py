@@ -90,6 +90,25 @@ app.include_router(superadmin_router)
 static_dir = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
+from fastapi import UploadFile, File
+from fastapi.staticfiles import StaticFiles
+import os
+import shutil
+
+# Dossier uploads
+upload_dir = Path(__file__).resolve().parent / "uploads"
+upload_dir.mkdir(exist_ok=True)
+
+app.mount("/uploads", StaticFiles(directory=str(upload_dir)), name="uploads")
+
+@app.post("/upload-profile-picture")
+async def upload_profile_picture(file: UploadFile = File(...)):
+    file_path = upload_dir / file.filename
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    return {"image_url": f"/uploads/{file.filename}"}
 
 # Root -> UI
 @app.get("/", include_in_schema=False)
