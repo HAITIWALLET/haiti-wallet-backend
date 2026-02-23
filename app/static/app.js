@@ -1808,9 +1808,18 @@ const profileToggle = document.getElementById("profileToggle");
 const profileDropdown = document.getElementById("profileDropdown");
 
 if (profileToggle && profileDropdown) {
-  profileImage.addEventListener("click", () => {
-    profileDropdown.classList.toggle("hide");
+  profileImage.addEventListener("click", (e) => {
+  e.stopPropagation();
+  profileDropdown.classList.toggle("hide");
+});
+
+const plusBtn = document.querySelector(".profile-plus");
+
+if (plusBtn) {
+  plusBtn.addEventListener("click", (e) => {
+    e.stopPropagation(); // empêche ouverture menu
   });
+}
 
   document.addEventListener("click", (e) => {
     if (!profileToggle.contains(e.target) && !profileDropdown.contains(e.target)) {
@@ -1907,6 +1916,9 @@ if (profileInput) {
     const file = e.target.files[0];
     if (!file) return;
 
+    // 👇 AJOUT PREVIEW DIRECT
+    profileImage.src = URL.createObjectURL(file);
+
     const formData = new FormData();
     formData.append("file", file);
 
@@ -1915,10 +1927,6 @@ if (profileInput) {
       body: formData
     });
 
-    const data = await res.json();
-
-    if (data.image_url) {
-      profileImage.src = data.image_url;
-    }
+    console.log(await res.text());
   });
 }
