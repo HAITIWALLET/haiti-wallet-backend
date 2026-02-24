@@ -1922,7 +1922,7 @@ if (profileInput) {
     formData.append("file", file);
 
     try {
-      const res = await fetch("/upload-profile-picture", {
+      const res = await api("/upload-profile-picture", {
         method: "POST",
         body: formData
       });
@@ -1941,8 +1941,9 @@ if (profileInput) {
 
 const plusBtn = document.querySelector(".profile-plus");
 
-if (plusBtn) {
+if (plusBtn && profileInput) {
   plusBtn.addEventListener("click", (e) => {
-    e.stopPropagation(); // empêche ouverture menu
+    e.stopPropagation();
+    profileInput.click();   // 🔥 ouvre la galerie
   });
 }
