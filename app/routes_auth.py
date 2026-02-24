@@ -274,7 +274,7 @@ def me(user: User = Depends(get_current_user)):
         last_name=user.last_name,
         phone=user.phone,
         phone_verified=user.phone_verified,
-        profile_picture=user.profile_picture,
+        profile_image=user.profile_image,
         wallet={
             "htg": float(user.wallet.htg) if user.wallet else 0.0,
             "usd": float(user.wallet.usd) if user.wallet else 0.0,

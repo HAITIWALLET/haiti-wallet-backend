@@ -121,7 +121,7 @@ async def upload_profile_picture(
 
     image_url = f"/uploads/{filename}"
 
-    current_user.profile_picture = image_url
+    current_user.profile_image = image_url
     db.commit()
 
     return {"image_url": image_url}

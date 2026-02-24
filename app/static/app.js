@@ -1852,6 +1852,9 @@ async function loadProfile() {
   }
 
   const user = await res.json();
+  if (user.profile_image) {
+  profileImage.src = user.profile_image;
+}
 
   document.getElementById("profileFirstName").value = user.first_name || "";
   document.getElementById("profileLastName").value = user.last_name || "";
