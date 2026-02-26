@@ -1844,6 +1844,16 @@ if (backToApp) {
   });
 }
 
+function updateAllProfileImages(imageUrl) {
+    const timestampedUrl = imageUrl + "?t=" + new Date().getTime();
+
+    const profileImage = document.getElementById("profileImage");
+    const headerImage = document.getElementById("headerProfileImage");
+
+    if (profileImage) profileImage.src = timestampedUrl;
+    if (headerImage) headerImage.src = timestampedUrl;
+}
+
 async function loadProfile() {
   const res = await api("/auth/me");
   if (!res.ok) {
@@ -1853,7 +1863,7 @@ async function loadProfile() {
 
   const user = await res.json();
   if (user.profile_image) {
-  profileImage.src = user.profile_image;
+  updateAllProfileImages(user.profile_image);
 }
 
   document.getElementById("profileFirstName").value = user.first_name || "";
@@ -1930,7 +1940,7 @@ if (profileInput) {
       const data = await res.json();
 
       if (data.image_url) {
-        profileImage.src = data.image_url;
+        updateAllProfileImages(data.image_url);
       }
 
     } catch (err) {
