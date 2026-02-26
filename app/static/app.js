@@ -1947,3 +1947,16 @@ if (plusBtn && profileInput) {
     profileInput.click();   // 🔥 ouvre la galerie
   });
 }
+
+document.addEventListener("DOMContentLoaded", async () => {
+    const res = await api("/auth/me");
+    if (res.ok) {
+        const user = await res.json();
+        if (user.profile_image) {
+            const avatar = document.getElementById("profileImage");
+            if (avatar) {
+                avatar.src = user.profile_image + "?t=" + new Date().getTime();
+            }
+        }
+    }
+});
