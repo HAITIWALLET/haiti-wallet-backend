@@ -14,7 +14,10 @@ class User(Base):
     role = Column(String, default="user")
     status = Column(String, default="active")
 # active | suspended | banned
-
+    two_factor_enabled = Column(Boolean, default=False)
+    otp_code = Column(String, nullable=True)
+    otp_expiry = Column(DateTime, nullable=True)
+    
     # identité
     first_name = Column(String, nullable=True)
     last_name = Column(String, nullable=True)

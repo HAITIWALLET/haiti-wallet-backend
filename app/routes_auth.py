@@ -5,6 +5,8 @@ from sqlalchemy.exc import OperationalError
 from datetime import datetime, timedelta
 import string
 import secrets
+import random
+from datetime import datetime, timedelta
 
 from .db import get_db
 from .models import User, Wallet, PhoneOTP, PasswordReset
@@ -248,6 +250,20 @@ def login(
 
     if user.status != "active":
         raise HTTPException(403, "Compte suspendu ou banni")
+    
+    if user.two_factor_enabled:
+
+     otp = str(random.randint(100000, 999999))
+    user.otp_code = otp
+    user.otp_expiry = datetime.utcnow() + timedelta(minutes=5)
+    db.commit()
+
+    send_email(user.email, otp)
+
+    return {
+        "requires_2fa": True,
+        "message": "OTP sent to email"
+    }
 
     token = create_access_token(subject=user.email)
 
@@ -304,3 +320,17 @@ from fastapi import UploadFile, File
 import shutil
 from uuid import uuid4
 import os
+
+
+import smtplib
+from email.mime.text import MIMEText
+
+def send_email(to_email, otp):
+    msg = MIMEText(f"Your Haiti Wallet verification code is: {otp}")
+    msg["Subject"] = "Haiti Wallet Verification"
+    msg["From"] = "contacthaitiwallet@gmail.com"
+    msg["To"] = to_email
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        server.login("contacthaitiwallet@gmail.com", "kcjbthybpczgkfqa")
+        server.send_message(msg)
