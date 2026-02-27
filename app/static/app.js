@@ -1971,7 +1971,7 @@ if (saveSecurity) {
       return;
     }
 
-    const res = await api("/auth/change-password", {
+    const res = await api("/auth/password/change", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
