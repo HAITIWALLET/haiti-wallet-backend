@@ -1845,6 +1845,26 @@ if (backToApp) {
   });
 }
 
+const goSecurity = document.getElementById("goSecurity");
+const securitySection = document.getElementById("securitySection");
+
+if (goSecurity && securitySection && appBox) {
+  goSecurity.addEventListener("click", () => {
+    appBox.classList.add("hide");
+    profileSection.classList.add("hide");
+    securitySection.classList.remove("hide");
+  });
+}
+
+const backFromSecurity = document.getElementById("backFromSecurity");
+
+if (backFromSecurity) {
+  backFromSecurity.addEventListener("click", () => {
+    securitySection.classList.add("hide");
+    appBox.classList.remove("hide");
+  });
+}
+
 async function loadProfile() {
   const res = await api("/auth/me");
   if (!res.ok) {
@@ -1917,3 +1937,64 @@ function updateProfileVisibility() {
 }
 
 document.addEventListener("DOMContentLoaded", updateProfileVisibility);
+
+const saveSecurity = document.getElementById("saveSecurity");
+
+if (saveSecurity) {
+  saveSecurity.addEventListener("click", async () => {
+
+    const msgEl = document.getElementById("securityMsg");
+    msgEl.classList.add("hide");
+
+    const current = document.getElementById("currentPassword").value;
+    const newPass = document.getElementById("newPassword").value;
+    const confirm = document.getElementById("confirmPassword").value;
+
+    if (!current || !newPass || !confirm) {
+      msgEl.textContent = "Tous les champs sont requis.";
+      msgEl.className = "err";
+      msgEl.classList.remove("hide");
+      return;
+    }
+
+    if (newPass.length < 6) {
+      msgEl.textContent = "Nouveau mot de passe trop court.";
+      msgEl.className = "err";
+      msgEl.classList.remove("hide");
+      return;
+    }
+
+    if (newPass !== confirm) {
+      msgEl.textContent = "Les mots de passe ne correspondent pas.";
+      msgEl.className = "err";
+      msgEl.classList.remove("hide");
+      return;
+    }
+
+    const res = await api("/auth/change-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        current_password: current,
+        new_password: newPass
+      })
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      msgEl.textContent = data.detail || "Erreur.";
+      msgEl.className = "err";
+      msgEl.classList.remove("hide");
+      return;
+    }
+
+    msgEl.textContent = "Mot de passe mis à jour avec succès.";
+    msgEl.className = "ok";
+    msgEl.classList.remove("hide");
+
+    document.getElementById("currentPassword").value = "";
+    document.getElementById("newPassword").value = "";
+    document.getElementById("confirmPassword").value = "";
+  });
+}
