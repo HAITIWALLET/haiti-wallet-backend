@@ -1809,21 +1809,15 @@ if (toggleRegister && registerPasswordInput) {
 
 const profileWrapper = document.getElementById("profileToggle");
 const profileDropdown = document.getElementById("profileDropdown");
-const profilePlus = document.querySelector(".profile-plus");
 
 if (profileWrapper && profileDropdown) {
-
   profileWrapper.addEventListener("click", (e) => {
-    // Si on clique sur le + → ne pas ouvrir menu
-    if (e.target.classList.contains("profile-plus")) return;
-
+    e.stopPropagation();
     profileDropdown.classList.toggle("hide");
   });
 
-  document.addEventListener("click", (e) => {
-    if (!profileWrapper.contains(e.target) && !profileDropdown.contains(e.target)) {
-      profileDropdown.classList.add("hide");
-    }
+  document.addEventListener("click", () => {
+    profileDropdown.classList.add("hide");
   });
 }
 
@@ -1847,16 +1841,6 @@ if (backToApp) {
   });
 }
 
-function updateAllProfileImages(imageUrl) {
-    const timestampedUrl = imageUrl + "?t=" + new Date().getTime();
-
-    const profileImage = document.getElementById("profileImage");
-    const headerImage = document.getElementById("headerProfileImage");
-
-    if (profileImage) profileImage.src = timestampedUrl;
-    if (headerImage) headerImage.src = timestampedUrl;
-}
-
 async function loadProfile() {
   const res = await api("/auth/me");
   if (!res.ok) {
@@ -1865,9 +1849,6 @@ async function loadProfile() {
   }
 
   const user = await res.json();
-  if (user.profile_image) {
-  updateAllProfileImages(user.profile_image);
-}
 
   document.getElementById("profileFirstName").value = user.first_name || "";
   document.getElementById("profileLastName").value = user.last_name || "";
@@ -1919,47 +1900,6 @@ sections.forEach(name => {
     });
   }
 });
-
-const profileInput = document.getElementById("profileInput");
-const profileImage = document.getElementById("profileImage");
-
-if (profileInput) {
-  profileInput.addEventListener("change", async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // ✅ Preview immédiat
-    profileImage.src = URL.createObjectURL(file);
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const res = await api("/upload-profile-picture", {
-        method: "POST",
-        body: formData
-      });
-
-      const data = await res.json();
-
-      if (data.image_url) {
-        updateAllProfileImages(data.image_url);
-      }
-
-    } catch (err) {
-      console.error("Upload error:", err);
-    }
-  });
-}
-
-const plusBtn = document.querySelector(".profile-plus");
-
-if (plusBtn && profileInput) {
-  plusBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    profileInput.click();   // 🔥 ouvre la galerie
-  });
-}
 
 document.addEventListener("DOMContentLoaded", () => {
     const token = localStorage.getItem("token");
