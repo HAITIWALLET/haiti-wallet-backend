@@ -1975,7 +1975,7 @@ if (saveSecurity) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        current_password: current,
+        old_password: current,
         new_password: newPass
       })
     });
