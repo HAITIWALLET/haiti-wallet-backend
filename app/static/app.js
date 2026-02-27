@@ -1925,6 +1925,15 @@ sections.forEach(name => {
   }
 });
 
+// Bouton supprimer mon compte
+const deleteBtn = document.getElementById("deleteAccount");
+
+if (deleteBtn) {
+    deleteBtn.addEventListener("click", () => {
+        showDeleteAccount();
+    });
+}
+
 function updateProfileVisibility() {
     const profileToggle = document.getElementById("profileToggle");
     if (!profileToggle) return;
