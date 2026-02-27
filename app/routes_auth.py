@@ -250,20 +250,6 @@ def login(
 
     if user.status != "active":
         raise HTTPException(403, "Compte suspendu ou banni")
-    
-    if user.two_factor_enabled:
-
-     otp = str(random.randint(100000, 999999))
-    user.otp_code = otp
-    user.otp_expiry = datetime.utcnow() + timedelta(minutes=5)
-    db.commit()
-
-    send_email(user.email, otp)
-
-    return {
-        "requires_2fa": True,
-        "message": "OTP sent to email"
-    }
 
     token = create_access_token(subject=user.email)
 
