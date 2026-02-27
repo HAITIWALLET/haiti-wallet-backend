@@ -306,6 +306,8 @@ if (j.user?.role === "superadmin") {
     superadminToken = token;
   }
 
+  updateProfileVisibility();
+
 }
 
 async function registerUser(email, password, ref) {
@@ -1537,6 +1539,7 @@ $("btnLogout") && ($("btnLogout").onclick = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("superadmin_token");
   token = "";
+  updateProfileVisibility();
   window.location.href = "/static/index.html";
 });
 
@@ -1544,6 +1547,7 @@ $("logoutAccount") && ($("logoutAccount").onclick = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("superadmin_token");
   token = "";
+  updateProfileVisibility();
   window.location.href = "/static/index.html";
 });
 
@@ -1901,10 +1905,8 @@ sections.forEach(name => {
   }
 });
 
-document.addEventListener("DOMContentLoaded", () => {
-    const token = localStorage.getItem("token");
+function updateProfileVisibility() {
     const profileToggle = document.getElementById("profileToggle");
-
     if (!profileToggle) return;
 
     if (token) {
@@ -1912,4 +1914,6 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
         profileToggle.style.display = "none";
     }
-});
+}
+
+document.addEventListener("DOMContentLoaded", updateProfileVisibility);
