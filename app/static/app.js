@@ -297,6 +297,9 @@ async function login(email, password) {
   token = j.access_token;
 
   localStorage.setItem("token", token);
+  await refreshAll();
+document.getElementById("loginBox").classList.add("hide");
+document.getElementById("appBox").classList.remove("hide");
 
 if (j.user?.role === "superadmin") {
     localStorage.setItem("superadmin_token", token);
@@ -1922,7 +1925,7 @@ const profileImage = document.getElementById("profileImage");
 
 if (profileInput) {
   profileInput.addEventListener("change", async (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
 
     // ✅ Preview immédiat
@@ -1958,15 +1961,15 @@ if (plusBtn && profileInput) {
   });
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-    const res = await api("/auth/me");
-    if (res.ok) {
-        const user = await res.json();
-        if (user.profile_image) {
-            const avatar = document.getElementById("profileImage");
-            if (avatar) {
-                avatar.src = user.profile_image + "?v=" + Date.now();
-            }
-        }
+document.addEventListener("DOMContentLoaded", () => {
+    const token = localStorage.getItem("token");
+    const profileToggle = document.getElementById("profileToggle");
+
+    if (!profileToggle) return;
+
+    if (token) {
+        profileToggle.style.display = "block";
+    } else {
+        profileToggle.style.display = "none";
     }
 });
