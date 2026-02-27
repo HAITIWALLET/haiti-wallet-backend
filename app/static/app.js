@@ -1965,7 +1965,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (user.profile_image) {
             const avatar = document.getElementById("profileImage");
             if (avatar) {
-                avatar.src = user.profile_image + "?t=" + new Date().getTime();
+                avatar.src = user.profile_image + "?v=" + Date.now();
             }
         }
     }
