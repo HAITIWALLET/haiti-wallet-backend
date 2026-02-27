@@ -19,6 +19,29 @@
         }
     </style>
 </head>
+<script>
+async function sendDeleteRequest() {
+
+    const data = {
+        first_name: document.getElementById("deleteFirstName").value,
+        last_name: document.getElementById("deleteLastName").value,
+        email: document.getElementById("deleteEmail").value,
+        reason: document.getElementById("deleteReason").value
+    };
+
+    const res = await fetch("/auth/request-delete-account", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+    });
+
+    const result = await res.json();
+
+    document.getElementById("deleteMessage").innerText = result.message;
+}
+</script>
 <body>
 
 <h1>Suppression du compte — Haiti Wallet</h1>
@@ -28,11 +51,26 @@ Les utilisateurs de Haiti Wallet ont le droit de demander la suppression complè
 </p>
 
 <h2>Comment demander la suppression</h2>
-<ul>
-    <li>Envoyer un email à : <strong>contacthaitiwallet@gmail.com</strong></li>
-    <li>Indiquer l’adresse email utilisée dans l’application</li>
-    <li>La demande sera traitée sous 72 heures</li>
-</ul>
+
+<div style="margin-top:20px;">
+
+    <input type="text" id="deleteFirstName" placeholder="Prénom" style="width:100%; padding:10px; margin-bottom:10px;">
+
+    <input type="text" id="deleteLastName" placeholder="Nom" style="width:100%; padding:10px; margin-bottom:10px;">
+
+    <input type="email" id="deleteEmail" placeholder="Email utilisé dans l'application" style="width:100%; padding:10px; margin-bottom:10px;">
+
+    <textarea id="deleteReason" placeholder="Pourquoi voulez-vous supprimer votre compte ?" 
+        style="width:100%; padding:10px; margin-bottom:10px; height:120px;"></textarea>
+
+    <button onclick="sendDeleteRequest()" 
+        style="background:#0a7cff; color:white; padding:12px; border:none; width:100%; border-radius:6px;">
+        Envoyer la demande
+    </button>
+
+    <p id="deleteMessage" style="margin-top:15px;"></p>
+
+</div>
 
 <h2>Données supprimées</h2>
 <ul>

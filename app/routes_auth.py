@@ -325,12 +325,44 @@ import os
 import smtplib
 from email.mime.text import MIMEText
 
-def send_email(to_email, otp):
-    msg = MIMEText(f"Your Haiti Wallet verification code is: {otp}")
-    msg["Subject"] = "Haiti Wallet Verification"
+def send_email(to_email, content):
+    from email.mime.text import MIMEText
+    import smtplib
+
+    msg = MIMEText(content)
+    msg["Subject"] = "Haiti Wallet Notification"
     msg["From"] = "contacthaitiwallet@gmail.com"
     msg["To"] = to_email
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
         server.login("contacthaitiwallet@gmail.com", "kcjbthybpczgkfqa")
         server.send_message(msg)
+
+from pydantic import BaseModel
+
+class DeleteAccountRequest(BaseModel):
+    first_name: str
+    last_name: str
+    email: str
+    reason: str
+
+
+@router.post("/request-delete-account")
+def request_delete_account(data: DeleteAccountRequest):
+
+    subject = "Demande de suppression de compte - Haiti Wallet"
+
+    body = f"""
+    Nouvelle demande de suppression :
+
+    Nom: {data.first_name}
+    Prénom: {data.last_name}
+    Email: {data.email}
+
+    Raison:
+    {data.reason}
+    """
+
+    send_email("contacthaitiwallet@gmail.com", body)
+
+    return {"message": "Request sent successfully"}

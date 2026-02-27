@@ -1998,3 +1998,25 @@ if (saveSecurity) {
     document.getElementById("confirmPassword").value = "";
   });
 }
+
+async function sendDeleteRequest() {
+
+    const data = {
+        first_name: document.getElementById("deleteFirstName").value,
+        last_name: document.getElementById("deleteLastName").value,
+        email: document.getElementById("deleteEmail").value,
+        reason: document.getElementById("deleteReason").value
+    };
+
+    const res = await fetch("/auth/request-delete-account", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+    });
+
+    const result = await res.json();
+
+    document.getElementById("deleteMessage").innerText = result.message;
+}
