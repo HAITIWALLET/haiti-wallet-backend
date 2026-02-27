@@ -2029,3 +2029,7 @@ async function sendDeleteRequest() {
 
     document.getElementById("deleteMessage").innerText = result.message;
 }
+
+function showDeleteAccount() {
+    window.location.href = "/static/delete-account.html";
+}
