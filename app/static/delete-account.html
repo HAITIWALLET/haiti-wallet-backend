@@ -14,34 +14,44 @@
             background: #ffffff;
             color: #222;
         }
+
         h1, h2 {
             color: #0a7cff;
         }
+
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+
+        button {
+            background: #0a7cff;
+            color: white;
+            padding: 12px;
+            border: none;
+            width: 100%;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .info-box {
+            background: #f4f8ff;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
-<script>
-async function sendDeleteRequest() {
 
-    const data = {
-        first_name: document.getElementById("deleteFirstName").value,
-        last_name: document.getElementById("deleteLastName").value,
-        email: document.getElementById("deleteEmail").value,
-        reason: document.getElementById("deleteReason").value
-    };
-
-    const res = await fetch("/auth/request-delete-account", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(data)
-    });
-
-    const result = await res.json();
-
-    document.getElementById("deleteMessage").innerText = result.message;
-}
-</script>
 <body>
 
 <h1>Suppression du compte — Haiti Wallet</h1>
@@ -50,25 +60,28 @@ async function sendDeleteRequest() {
 Les utilisateurs de Haiti Wallet ont le droit de demander la suppression complète de leur compte et de leurs données personnelles.
 </p>
 
+<div class="info-box">
+    <strong>Important :</strong>  
+    Lorsque vous envoyez votre demande, assurez-vous d’inclure toutes les informations demandées ci-dessous afin que nous puissions traiter votre requête rapidement.
+</div>
+
 <h2>Comment demander la suppression</h2>
 
 <div style="margin-top:20px;">
 
-    <input type="text" id="deleteFirstName" placeholder="Prénom" style="width:100%; padding:10px; margin-bottom:10px;">
+    <input type="text" id="deleteFirstName" placeholder="Prénom">
 
-    <input type="text" id="deleteLastName" placeholder="Nom" style="width:100%; padding:10px; margin-bottom:10px;">
+    <input type="text" id="deleteLastName" placeholder="Nom">
 
-    <input type="email" id="deleteEmail" placeholder="Email utilisé dans l'application" style="width:100%; padding:10px; margin-bottom:10px;">
+    <input type="email" id="deleteEmail" placeholder="Email utilisé dans l'application">
 
-    <textarea id="deleteReason" placeholder="Pourquoi voulez-vous supprimer votre compte ?" 
-        style="width:100%; padding:10px; margin-bottom:10px; height:120px;"></textarea>
+    <textarea id="deleteReason" 
+        placeholder="Pourquoi voulez-vous supprimer votre compte ?" 
+        style="height:120px;"></textarea>
 
-    <button onclick="sendDeleteRequest()" 
-        style="background:#0a7cff; color:white; padding:12px; border:none; width:100%; border-radius:6px;">
+    <button onclick="sendDeleteRequest()">
         Envoyer la demande
     </button>
-
-    <p id="deleteMessage" style="margin-top:15px;"></p>
 
 </div>
 
@@ -83,6 +96,27 @@ Les utilisateurs de Haiti Wallet ont le droit de demander la suppression complè
 <p>
 Certaines données de transaction peuvent être conservées pour des raisons légales et de sécurité.
 </p>
+
+<script>
+function sendDeleteRequest() {
+
+    const prenom = document.getElementById("deleteFirstName").value;
+    const nom = document.getElementById("deleteLastName").value;
+    const email = document.getElementById("deleteEmail").value;
+    const raison = document.getElementById("deleteReason").value;
+
+    const subject = encodeURIComponent("Demande de suppression de compte - Haiti Wallet");
+
+    const body = encodeURIComponent(
+        "Prénom : " + prenom + "\n" +
+        "Nom : " + nom + "\n" +
+        "Email utilisé : " + email + "\n\n" +
+        "Raison :\n" + raison
+    );
+
+    window.location.href = `mailto:contacthaitiwallet@gmail.com?subject=${subject}&body=${body}`;
+}
+</script>
 
 </body>
 </html>
