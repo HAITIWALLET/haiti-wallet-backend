@@ -1829,40 +1829,20 @@ const goProfile = document.getElementById("goProfile");
 const profileSection = document.getElementById("profileSection");
 const appBox = document.getElementById("appBox");
 const backToApp = document.getElementById("backToApp");
-
-if (goProfile && profileSection && appBox) {
-  goProfile.addEventListener("click", async () => {
-    appBox.classList.add("hide");
-    profileSection.classList.remove("hide");
-    await loadProfile();
-  });
-}
-
-if (backToApp) {
-  backToApp.addEventListener("click", () => {
-    profileSection.classList.add("hide");
-    appBox.classList.remove("hide");
-  });
-}
-
 const goSecurity = document.getElementById("goSecurity");
 const securitySection = document.getElementById("securitySection");
 
-if (goSecurity && securitySection && appBox) {
-  goSecurity.addEventListener("click", () => {
-    appBox.classList.add("hide");
-    profileSection.classList.add("hide");
-    securitySection.classList.remove("hide");
-  });
+if (goProfile) {
+    goProfile.addEventListener("click", async () => {
+        showSection("info");
+        await loadProfile();
+    });
 }
 
-const backFromSecurity = document.getElementById("backFromSecurity");
-
-if (backFromSecurity) {
-  backFromSecurity.addEventListener("click", () => {
-    securitySection.classList.add("hide");
-    appBox.classList.remove("hide");
-  });
+if (goSecurity) {
+    goSecurity.addEventListener("click", () => {
+        showSection("security");
+    });
 }
 
 async function loadProfile() {
