@@ -1899,30 +1899,34 @@ if (saveProfile) {
 
 // === NAVIGATION SIMPLE ET PROPRE ===
 
-function showSection(id) {
-  document.querySelectorAll('[id^="tab-"]').forEach(sec => {
-    sec.classList.add("hide");
-  });
+document.addEventListener("DOMContentLoaded", () => {
 
-  const target = document.getElementById("tab-" + id);
-  if (target) {
-    target.classList.remove("hide");
-  }
-}
+    function showSection(id) {
+        document.querySelectorAll('[id^="tab-"]').forEach(sec => {
+            sec.classList.add("hide");
+        });
 
-// Dashboard par défaut
-showSection("dashboard");
+        const target = document.getElementById("tab-" + id);
+        if (target) {
+            target.classList.remove("hide");
+        }
+    }
 
-// Boutons menu
-const sections = ["dashboard","topup","transfer","history","partners","info","admin"];
+    // Dashboard par défaut
+    showSection("dashboard");
 
-sections.forEach(name => {
-  const btn = document.getElementById("tabBtn-" + name);
-  if (btn) {
-    btn.addEventListener("click", () => {
-      showSection(name);
+    // Boutons menu
+    const sections = ["dashboard", "topup", "transfer", "history", "partners", "info", "admin"];
+
+    sections.forEach(name => {
+        const btn = document.getElementById("tabBtn-" + name);
+        if (btn) {
+            btn.addEventListener("click", () => {
+                showSection(name);
+            });
+        }
     });
-  }
+
 });
 
 // Bouton supprimer mon compte
