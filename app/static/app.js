@@ -1879,8 +1879,6 @@ if (saveProfile) {
 
 // === NAVIGATION SIMPLE ET PROPRE ===
 
-document.addEventListener("DOMContentLoaded", () => {
-
     function showSection(id) {
         document.querySelectorAll('[id^="tab-"]').forEach(sec => {
             sec.classList.add("hide");
@@ -1891,6 +1889,8 @@ document.addEventListener("DOMContentLoaded", () => {
             target.classList.remove("hide");
         }
     }
+
+    document.addEventListener("DOMContentLoaded", () => {
 
     // Dashboard par défaut
     showSection("dashboard");
