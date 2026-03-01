@@ -1832,16 +1832,20 @@ const backToApp = document.getElementById("backToApp");
 const goSecurity = document.getElementById("goSecurity");
 const securitySection = document.getElementById("securitySection");
 
-if (goProfile) {
+if (goProfile && profileSection && appBox && securitySection) {
     goProfile.addEventListener("click", async () => {
-        showSection("info");
+        appBox.classList.add("hide");
+        securitySection.classList.add("hide");
+        profileSection.classList.remove("hide");
         await loadProfile();
     });
 }
 
-if (goSecurity) {
+if (goSecurity && securitySection && appBox && profileSection) {
     goSecurity.addEventListener("click", () => {
-        showSection("security");
+        appBox.classList.add("hide");
+        profileSection.classList.add("hide");
+        securitySection.classList.remove("hide");
     });
 }
 
