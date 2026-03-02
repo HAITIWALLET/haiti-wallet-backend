@@ -1925,12 +1925,16 @@ if (deleteBtn) {
 
 function updateProfileVisibility() {
     const profileToggle = document.getElementById("profileToggle");
-    if (!profileToggle) return;
+    const menuToggle = document.getElementById("menuToggle");
+
+    if (!profileToggle || !menuToggle) return;
 
     if (token) {
         profileToggle.style.display = "block";
+        menuToggle.style.display = "block";   // 👈 ON AFFICHE ☰
     } else {
         profileToggle.style.display = "none";
+        menuToggle.style.display = "none";    // 👈 ON CACHE ☰
     }
 }
 
