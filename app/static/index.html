@@ -172,29 +172,52 @@
     display: none;
 }
 
+.header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;   /* 👈 ajoute ça */
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#menuToggle {
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.header-bar h1 {
+    margin: 0;
+    font-size: 22px; /* 👈 important pour mobile */
+}
+
+#profileToggle {
+    font-weight: bold;
+    cursor: pointer;
+    white-space: nowrap;   /* 👈 évite retour ligne bizarre */
+}
+
 </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
-<div class="header">
+<div class="header-bar">
 
-  <div style="display:flex; align-items:center; justify-content:space-between;">
-
-    <!-- Partie gauche -->
-    <div style="display:flex; align-items:center; gap:15px;">
-      <div id="menuToggle" style="font-size:26px; cursor:pointer; display:none;">
-        ☰
-      </div>
-      <h1 style="margin:0;">Haiti Wallet</h1>
-    </div>
-
-    <!-- Partie droite -->
-    <div id="profileToggle" style="cursor:pointer; font-weight:bold; display:none;">
-      Mon compte
-    </div>
-
+  <div class="header-left">
+    <div id="menuToggle">☰</div>
+    <h1>Haiti Wallet</h1>
   </div>
+
+  <div id="profileToggle">
+    Mon compte
+  </div>
+
+</div>
 
   <!-- Dropdown -->
   <div id="profileDropdown" class="profile-dropdown hide">
