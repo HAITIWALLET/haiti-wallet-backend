@@ -2024,14 +2024,22 @@ async function sendDeleteRequest() {
 }
 
 function showDeleteAccount() {
-    window.location.href = "/static/delete-account.html";
+    window.location.href = "/static/index.html";
 }
 
 const menuToggle = document.getElementById("menuToggle");
 const sideMenu = document.getElementById("sideMenu");
+const profileToggle = document.getElementById("profileToggle");
 
-if (menuToggle && sideMenu) {
+if (menuToggle && sideMenu && profileToggle && profileDropdown) {
+
     menuToggle.addEventListener("click", () => {
+        profileDropdown.classList.add("hide"); // ferme profil
         sideMenu.classList.toggle("hide");
+    });
+
+    profileToggle.addEventListener("click", () => {
+        sideMenu.classList.add("hide"); // ferme menu
+        profileDropdown.classList.toggle("hide");
     });
 }
