@@ -7,7 +7,13 @@
   <style>
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:#f6f8fb}
     .wrap{max-width:980px;margin:28px auto;padding:0 16px}
-    .card{background:#fff;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.06);padding:18px}
+    .card {
+    background:#fff;
+    border-radius:14px;
+    box-shadow:0 10px 30px rgba(0,0,0,.06);
+    padding:18px;
+    position: relative;   /* 👈 AJOUTE ÇA */
+    }
     .row{display:flex;gap:16px;flex-wrap:wrap}
     .section{margin-top:14px}
     .muted{color:#667085;font-size:13px}
@@ -141,14 +147,14 @@
 
 #sideMenu {
     position: fixed;
-    top: 60px;
+    top: 70px;      /* 👈 PAS 0 */
     left: 0;
     width: 260px;
-    height: 100%;
+    height: calc(100% - 70px);
     background: white;
     box-shadow: 2px 0 10px rgba(0,0,0,0.1);
     padding: 20px;
-    z-index: 1000;
+    z-index: 2000;  /* 👈 en dessous du header */
 }
 
 #sideMenu button {
@@ -165,9 +171,8 @@
     align-items: center;
     justify-content: space-between;
     position: relative;
-    z-index: 2000;
+    z-index: 3000;   /* 👈 plus haut que tout */
     background: white;
-    padding: 10px 0;
 }
 
 .profile-dropdown {
