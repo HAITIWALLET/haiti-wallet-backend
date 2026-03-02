@@ -1811,19 +1811,6 @@ if (toggleRegister && registerPasswordInput) {
   });
 }
 
-const profileWrapper = document.getElementById("profileToggle");
-const profileDropdown = document.getElementById("profileDropdown");
-
-if (profileWrapper && profileDropdown) {
-  profileWrapper.addEventListener("click", (e) => {
-    e.stopPropagation();
-    profileDropdown.classList.toggle("hide");
-  });
-
-  document.addEventListener("click", () => {
-    profileDropdown.classList.add("hide");
-  });
-}
 
 const goProfile = document.getElementById("goProfile");
 const profileSection = document.getElementById("profileSection");
@@ -2027,19 +2014,30 @@ function showDeleteAccount() {
     window.location.href = "/static/index.html";
 }
 
+// ===== MENU + PROFILE CLEAN VERSION =====
+
 const menuToggle = document.getElementById("menuToggle");
 const sideMenu = document.getElementById("sideMenu");
 const profileToggle = document.getElementById("profileToggle");
+const profileDropdown = document.getElementById("profileDropdown");
 
-if (menuToggle && sideMenu && profileToggle && profileDropdown) {
-
-    menuToggle.addEventListener("click", () => {
-        profileDropdown.classList.add("hide"); // ferme profil
-        sideMenu.classList.toggle("hide");
-    });
-
-    profileToggle.addEventListener("click", () => {
-        sideMenu.classList.add("hide"); // ferme menu
-        profileDropdown.classList.toggle("hide");
-    });
+if (menuToggle && sideMenu) {
+  menuToggle.addEventListener("click", (e) => {
+    e.stopPropagation();
+    profileDropdown?.classList.add("hide");
+    sideMenu.classList.toggle("hide");
+  });
 }
+
+if (profileToggle && profileDropdown) {
+  profileToggle.addEventListener("click", (e) => {
+    e.stopPropagation();
+    sideMenu?.classList.add("hide");
+    profileDropdown.classList.toggle("hide");
+  });
+}
+
+document.addEventListener("click", () => {
+  sideMenu?.classList.add("hide");
+  profileDropdown?.classList.add("hide");
+});
