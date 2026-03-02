@@ -2087,3 +2087,46 @@ document.getElementById("backFromSecurity")?.addEventListener("click", () => {
   document.getElementById("securitySection")?.classList.add("hide");
   document.getElementById("appBox")?.classList.remove("hide");
 });
+
+async function loadRevenueStats() {
+  const res = await api("/admin/stats");
+  if (!res.ok) return;
+
+  const data = await res.json();
+
+  document.getElementById("revToday").textContent =
+    data.today.toFixed(2);
+
+  document.getElementById("revMonth").textContent =
+    data.month.toFixed(2);
+
+  document.getElementById("revTotal").textContent =
+    data.total.toFixed(2);
+
+  drawRevenueChart(data.monthly);
+}
+
+function drawRevenueChart(monthlyData) {
+  const ctx = document.getElementById("revenueChart");
+
+  const labels = monthlyData.map(m =>
+    `${m.year}-${String(m.month).padStart(2, "0")}`
+  );
+
+  const values = monthlyData.map(m => m.total);
+
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "Revenus mensuels",
+        data: values,
+      }]
+    }
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadRevenueStats();
+});

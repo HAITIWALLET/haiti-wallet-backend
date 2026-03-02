@@ -210,6 +210,9 @@
 }
 
 </style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </head>
 <body>
   <div class="wrap">
@@ -989,6 +992,19 @@
               </table>
             </div>
           </div>
+          <div class="card section">
+  <h3 style="margin:0 0 8px">Stats — Revenus</h3>
+
+  <div style="margin-top:10px">
+    <div>Revenus aujourd’hui : <b id="revToday">0.00</b></div>
+    <div>Revenus ce mois : <b id="revMonth">0.00</b></div>
+    <div style="margin-top:6px;font-size:18px">
+      Total cumulé : <b id="revTotal">0.00</b>
+    </div>
+  </div>
+
+  <canvas id="revenueChart" style="margin-top:20px;"></canvas>
+</div>
           <!-- Les cartes injectées par app.js (stats, adjust, superadminCard) vont se mettre ici automatiquement -->
         </div>
 
