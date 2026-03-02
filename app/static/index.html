@@ -150,16 +150,45 @@
 .profile-item.danger {
   color: red;
 }
+
+#sideMenu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 260px;
+    height: 100%;
+    background: white;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    padding: 20px;
+    z-index: 1000;
+}
+
+#sideMenu button {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.hide {
+    display: none;
+}
+
 </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
 <div class="header">
-  <h1 style="margin:0">Haiti Wallet</h1>
+  <div style="display:flex; align-items:center; justify-content:space-between;">
+    
+    <div style="display:flex; align-items:center; gap:15px;">
+        <div id="menuToggle" style="font-size:26px; cursor:pointer;">☰</div>
+        <h1 style="margin:0">Haiti Wallet</h1>
+    </div>
 
-  <div id="profileToggle" style="display:none;cursor:pointer;font-weight:800;color:#1e3a8a;">
-  Mon compte
+    <div id="profileToggle" style="cursor:pointer; font-weight:bold;">
+        Mon compte
+    </div>
+
 </div>
 
     <div id="profileDropdown" class="profile-dropdown hide">
@@ -310,7 +339,7 @@
         <div class="muted" id="who"></div>
 
         <!-- MENU -->
-        <div class="nav">
+        <div id="sideMenu" class="hide">
           <button id="tabBtn-dashboard" class="tabbtn">Dashboard</button>
           <button id="tabBtn-topup" class="tabbtn">Recharge</button>
           <button id="tabBtn-transfer" class="tabbtn">Transfert</button>

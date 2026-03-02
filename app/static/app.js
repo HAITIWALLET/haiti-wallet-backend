@@ -1907,6 +1907,7 @@ if (saveProfile) {
         if (btn) {
             btn.addEventListener("click", () => {
                 showSection(name);
+                sideMenu.classList.add("hide");
             });
         }
     });
@@ -2020,4 +2021,13 @@ async function sendDeleteRequest() {
 
 function showDeleteAccount() {
     window.location.href = "/static/delete-account.html";
+}
+
+const menuToggle = document.getElementById("menuToggle");
+const sideMenu = document.getElementById("sideMenu");
+
+if (menuToggle && sideMenu) {
+    menuToggle.addEventListener("click", () => {
+        sideMenu.classList.toggle("hide");
+    });
 }
