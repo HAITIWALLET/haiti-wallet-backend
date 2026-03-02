@@ -2029,7 +2029,10 @@ function closeAllMenus() {
 menuToggle?.addEventListener("click", (e) => {
   e.stopPropagation();
 
-  if (!sideMenu) return;
+  // 🔥 ferme sections ouvertes
+  document.getElementById("profileSection")?.classList.add("hide");
+  document.getElementById("securitySection")?.classList.add("hide");
+  document.getElementById("appBox")?.classList.remove("hide");
 
   const isOpen = !sideMenu.classList.contains("hide");
 
