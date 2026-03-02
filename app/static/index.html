@@ -125,19 +125,7 @@
   background: url("https://cdn-icons-png.flaticon.com/512/149/149071.png") center/cover no-repeat;
   cursor: pointer;
 }
-
-.profile-dropdown {
-  position: absolute;
-  right: 0;
-  top: 45px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  min-width: 180px;
-  padding: 8px 0;
-  z-index: 1000;
-}
-
+ 
 .profile-item {
   padding: 10px 15px;
   cursor: pointer;
@@ -176,7 +164,20 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 10px;   /* 👈 ajoute ça */
+    position: relative;
+    z-index: 1100;   /* 👈 plus haut que le dropdown */
+}
+
+.profile-dropdown {
+    position: absolute;
+    right: 0;
+    top: 45px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    min-width: 180px;
+    padding: 8px 0;
+    z-index: 1000;   /* 👈 plus bas que le header */
 }
 
 .header-left {
