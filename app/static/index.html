@@ -178,44 +178,32 @@
   <div class="wrap">
     <div class="card">
 <div class="header">
+
   <div style="display:flex; align-items:center; justify-content:space-between;">
-    
-    <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
-    
+
+    <!-- Partie gauche -->
     <div style="display:flex; align-items:center; gap:15px;">
-        <div id="menuToggle" style="font-size:26px; cursor:pointer; display:none;">☰</div>
-        <h1 style="margin:0">Haiti Wallet</h1>
+      <div id="menuToggle" style="font-size:26px; cursor:pointer; display:none;">
+        ☰
+      </div>
+      <h1 style="margin:0;">Haiti Wallet</h1>
     </div>
 
-    <div id="profileToggle" style="cursor:pointer; font-weight:bold;">
-        Mon compte
+    <!-- Partie droite -->
+    <div id="profileToggle" style="cursor:pointer; font-weight:bold; display:none;">
+      Mon compte
     </div>
 
-</div>
-        <div id="menuToggle" style="font-size:26px; cursor:pointer;">☰</div>
-        <div id="menuToggle" style="font-size:26px; cursor:pointer; display:none;">
-    ☰
-</div>
-        <h1 style="margin:0">Haiti Wallet</h1>
-    </div>
-
-    <div id="profileToggle" style="cursor:pointer; font-weight:bold;">
-        Mon compte
-    </div>
-
-</div>
-
-  <div id="profileToggle" style="display:none;cursor:pointer;font-weight:800;color:#1e3a8a;">
-  Mon compte
-</div>
-
-    <div id="profileDropdown" class="profile-dropdown hide">
-      <div class="profile-item" id="goProfile">Mes informations</div>
-      <div class="profile-item" id="goSecurity">Sécurité</div>
-      <div class="profile-item danger" id="deleteAccount">Supprimer mon compte</div>
-      <div class="profile-item" id="logoutAccount">Se déconnecter</div>
-    </div>
   </div>
+
+  <!-- Dropdown -->
+  <div id="profileDropdown" class="profile-dropdown hide">
+    <div class="profile-item" id="goProfile">Mes informations</div>
+    <div class="profile-item" id="goSecurity">Sécurité</div>
+    <div class="profile-item danger" id="deleteAccount">Supprimer mon compte</div>
+    <div class="profile-item" id="logoutAccount">Se déconnecter</div>
+  </div>
+
 </div>
       <!-- LOGIN + REGISTER (TOGGLE) -->
       <div id="loginBox" class="section">
