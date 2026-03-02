@@ -221,9 +221,19 @@ function hideMsg(el) {
 }
 
 async function api(path, opts = {}) {
-  const headers = opts.headers || {};
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-  return fetch(path, { ...opts, headers });
+  const headers = {
+    "Content-Type": "application/json",
+    ...(opts.headers || {})
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  return fetch(path, {
+    ...opts,
+    headers
+  });
 }
 
 /* ---------------------------
@@ -1855,15 +1865,22 @@ const saveProfile = document.getElementById("saveProfile");
 
 if (saveProfile) {
   saveProfile.addEventListener("click", async () => {
-    await api("/auth/me", {
+
+    const res = await api("/auth/me", {
       method: "PUT",
       body: JSON.stringify({
-  first_name: document.getElementById("profileFirstName").value,
-  last_name: document.getElementById("profileLastName").value,
-  phone: document.getElementById("profilePhone").value,
-})
+        first_name: document.getElementById("profileFirstName").value,
+        last_name: document.getElementById("profileLastName").value,
+        phone: document.getElementById("profilePhone").value,
+      })
     });
 
+    if (!res.ok) {
+      alert("Erreur sauvegarde");
+      return;
+    }
+
+    await loadProfile(); // 🔥 recharge depuis backend
     alert("Profil mis à jour");
   });
 }
