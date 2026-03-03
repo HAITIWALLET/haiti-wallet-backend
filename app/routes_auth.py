@@ -69,22 +69,23 @@ def normalize_phone(phone: str) -> str:
 def send_sms_simulated(phone: str, code: str):
     print(f"[SIMULATED SMS] to={phone} code={code}")
 
+import os
 import smtplib
 from email.mime.text import MIMEText
-import os
 
-def send_email_otp(to_email: str, code: str):
+def send_email_otp(email: str, code: str):
     smtp_user = os.getenv("SMTP_USER")
     smtp_pass = os.getenv("SMTP_PASS")
 
-    msg = MIMEText(f"Votre code de vérification Haiti Wallet est : {code}\nValide 10 minutes.")
-    msg["Subject"] = "Haiti Wallet - Code de vérification"
+    msg = MIMEText(f"Votre code Haiti Wallet est : {code}")
+    msg["Subject"] = "Code de vérification"
     msg["From"] = smtp_user
-    msg["To"] = to_email
+    msg["To"] = email
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+    with smtplib.SMTP("smtp.gmail.com", 587, timeout=20) as server:
+        server.starttls()
         server.login(smtp_user, smtp_pass)
-        server.sendmail(smtp_user, [to_email], msg.as_string())
+        server.send_message(msg)
         
 # -------------------------------------------------
 # PHONE OTP START
@@ -338,7 +339,7 @@ def send_email(to_email, content):
     msg["To"] = to_email
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login("contacthaitiwallet@gmail.com", "kcjbthybpczgkfqa")
+        server.login("contacthaitiwallet@gmail.com", "iquhqohdrotxtkku")
         server.send_message(msg)
 
 from pydantic import BaseModel
