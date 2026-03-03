@@ -69,13 +69,30 @@ def normalize_phone(phone: str) -> str:
 def send_sms_simulated(phone: str, code: str):
     print(f"[SIMULATED SMS] to={phone} code={code}")
 
+import smtplib
+from email.mime.text import MIMEText
+import os
 
+def send_email_otp(to_email: str, code: str):
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_pass = os.getenv("SMTP_PASS")
+
+    msg = MIMEText(f"Votre code de vérification Haiti Wallet est : {code}\nValide 10 minutes.")
+    msg["Subject"] = "Haiti Wallet - Code de vérification"
+    msg["From"] = smtp_user
+    msg["To"] = to_email
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        server.login(smtp_user, smtp_pass)
+        server.sendmail(smtp_user, [to_email], msg.as_string())
+        
 # -------------------------------------------------
 # PHONE OTP START
 # -------------------------------------------------
 @router.post("/phone/start")
 def phone_start(data: PhoneStartIn, db: Session = Depends(get_db)):
     phone = normalize_phone(data.phone)
+    email = data.email.lower().strip()
     if len(phone) < 8:
         raise HTTPException(400, "Numéro invalide")
 
@@ -101,7 +118,7 @@ def phone_start(data: PhoneStartIn, db: Session = Depends(get_db)):
     db.add(otp)
     db.commit()
 
-    send_sms_simulated(phone, code)
+    send_email_otp(email, code)
     return {"ok": True, "message": "Code envoyé (valide 10 minutes)"}
 
 

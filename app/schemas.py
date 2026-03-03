@@ -13,6 +13,7 @@ class RegisterIn(BaseModel):
 
 class PhoneStartIn(BaseModel):
     phone: str
+    email: EmailStr
 
 
 class PhoneVerifyIn(BaseModel):

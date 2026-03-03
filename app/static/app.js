@@ -1688,13 +1688,18 @@ $("btnSendOtp") && ($("btnSendOtp").onclick = async () => {
   hideMsg(msgEl);
 
   const phone = ($("reg-phone")?.value || "").trim();
-  if (!phone || phone.length < 8) return showMsg(msgEl, false, "Numéro invalide.");
+if (!phone || phone.length < 8)
+    return showMsg(msgEl, false, "Numéro invalide.");
 
-  const res = await fetch("/auth/phone/start", {
+const email = ($("reg-email")?.value || "").trim();
+if (!email)
+    return showMsg(msgEl, false, "Email requis.");
+
+const res = await fetch("/auth/phone/start", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ phone }),
-  });
+    body: JSON.stringify({ phone, email })
+});
 
   const j = await res.json().catch(() => ({}));
   if (!res.ok) return showMsg(msgEl, false, j.detail || "Erreur envoi code");
