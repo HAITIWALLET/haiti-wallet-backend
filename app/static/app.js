@@ -2110,6 +2110,11 @@ async function loadRevenueStats() {
 
   if (btn) btn.textContent = "Rafraîchir";
 }
+document.addEventListener("click", (e) => {
+  if (e.target && e.target.id === "btnRefreshRevenue") {
+    loadRevenueStats();
+  }
+});
 
 function drawRevenueChart(monthlyData) {
   const ctx = document.getElementById("revenueChart");
