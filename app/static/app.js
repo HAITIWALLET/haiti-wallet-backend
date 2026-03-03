@@ -2089,6 +2089,9 @@ document.getElementById("backFromSecurity")?.addEventListener("click", () => {
 });
 
 async function loadRevenueStats() {
+  const btn = document.getElementById("btnRefreshRevenue");
+  if (btn) btn.textContent = "Chargement...";
+
   const res = await api("/admin/stats");
   if (!res.ok) return;
 
@@ -2104,6 +2107,8 @@ async function loadRevenueStats() {
     data.total.toFixed(2);
 
   drawRevenueChart(data.monthly);
+
+  if (btn) btn.textContent = "Rafraîchir";
 }
 
 function drawRevenueChart(monthlyData) {
