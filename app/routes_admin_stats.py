@@ -1,62 +1,92 @@
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, extract
 
 from .db import get_db
-from .models import Transaction, User
+from .models import TopupRequest, User
 from .security import require_admin
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
+
 @router.get("/stats")
-def admin_stats(
-    days: int = 30,
+def revenue_stats(
     db: Session = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
-    # période
-    since = datetime.utcnow() - timedelta(days=days)
+    today = datetime.utcnow().date()
+    now = datetime.utcnow()
 
-    # revenus frais (amount est NEGATIF dans tx_fee => on prend -sum)
-    fee_htg = (
-        db.query(func.coalesce(func.sum(Transaction.amount), 0))
-        .filter(Transaction.type == "fee", Transaction.currency == "htg", Transaction.created_at >= since)
-        .scalar()
-    )
-    fee_usd = (
-        db.query(func.coalesce(func.sum(Transaction.amount), 0))
-        .filter(Transaction.type == "fee", Transaction.currency == "usd", Transaction.created_at >= since)
-        .scalar()
-    )
-
-    # total spend partenaires (débit négatif)
-    spend_htg = (
-        db.query(func.coalesce(func.sum(Transaction.amount), 0))
-        .filter(Transaction.type == "partner_spend", Transaction.currency == "htg", Transaction.created_at >= since)
-        .scalar()
-    )
-    spend_usd = (
-        db.query(func.coalesce(func.sum(Transaction.amount), 0))
-        .filter(Transaction.type == "partner_spend", Transaction.currency == "usd", Transaction.created_at >= since)
+    # -------------------------
+    # TOTAL CUMULÉ (APPROVED)
+    # -------------------------
+    total = (
+        db.query(func.coalesce(func.sum(TopupRequest.fee_amount), 0))
+        .filter(
+            TopupRequest.status == "APPROVED",
+            TopupRequest.decided_at != None
+        )
         .scalar()
     )
 
-    # volume topup net (positif)
-    topup_htg = (
-        db.query(func.coalesce(func.sum(Transaction.amount), 0))
-        .filter(Transaction.type == "topup", Transaction.currency == "htg", Transaction.created_at >= since)
+    # -------------------------
+    # REVENUS AUJOURD’HUI
+    # -------------------------
+    today_sum = (
+        db.query(func.coalesce(func.sum(TopupRequest.fee_amount), 0))
+        .filter(
+            TopupRequest.status == "APPROVED",
+            TopupRequest.decided_at != None,
+            func.date(TopupRequest.decided_at) == today
+        )
         .scalar()
     )
-    topup_usd = (
-        db.query(func.coalesce(func.sum(Transaction.amount), 0))
-        .filter(Transaction.type == "topup", Transaction.currency == "usd", Transaction.created_at >= since)
+
+    # -------------------------
+    # REVENUS CE MOIS
+    # -------------------------
+    month_sum = (
+        db.query(func.coalesce(func.sum(TopupRequest.fee_amount), 0))
+        .filter(
+            TopupRequest.status == "APPROVED",
+            TopupRequest.decided_at != None,
+            extract("year", TopupRequest.decided_at) == now.year,
+            extract("month", TopupRequest.decided_at) == now.month
+        )
         .scalar()
     )
+
+    # -------------------------
+    # GRAPH MENSUEL (12 derniers mois)
+    # -------------------------
+    monthly_data = []
+
+    for i in range(12):
+        month_date = now - timedelta(days=i * 30)
+
+        month_total = (
+            db.query(func.coalesce(func.sum(TopupRequest.fee_amount), 0))
+            .filter(
+                TopupRequest.status == "APPROVED",
+                TopupRequest.decided_at != None,
+                extract("year", TopupRequest.decided_at) == month_date.year,
+                extract("month", TopupRequest.decided_at) == month_date.month
+            )
+            .scalar()
+        )
+
+        monthly_data.append({
+            "year": month_date.year,
+            "month": month_date.month,
+            "total": float(month_total)
+        })
+
+    monthly_data.reverse()
 
     return {
-        "period_days": days,
-        "fees": {"htg": float(-fee_htg), "usd": float(-fee_usd)},          # revenu = positif
-        "spend": {"htg": float(-spend_htg), "usd": float(-spend_usd)},     # total dépensé = positif
-        "topups_net": {"htg": float(topup_htg), "usd": float(topup_usd)},
+        "today": float(today_sum),
+        "month": float(month_sum),
+        "total": float(total),
+        "monthly": monthly_data
     }
