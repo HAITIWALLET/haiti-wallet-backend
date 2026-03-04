@@ -5,6 +5,7 @@ from sqlalchemy.exc import OperationalError
 from datetime import datetime, timedelta
 import string
 import secrets
+import time
 from .db import get_db
 from .models import User, Wallet, PasswordReset
 from .models_audit import AuditLog
@@ -178,10 +179,12 @@ def login(
     form: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ):
+
     email = form.username.strip().lower()
     user = db.query(User).filter(User.email == email).one_or_none()
 
     if not user or not verify_password(form.password, user.password_hash):
+        time.sleep(1)
         raise HTTPException(401, "Email ou mot de passe incorrect")
 
     if user.status != "active":

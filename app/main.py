@@ -12,7 +12,7 @@ from fastapi import UploadFile, File, Depends
 from sqlalchemy import text
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.orm import Session
-
+from fastapi.middleware.cors import CORSMiddleware
 from .db import Base, engine, get_db, SessionLocal
 from . import models
 from .models import User
@@ -49,6 +49,13 @@ cloudinary.config(
 # ==============================
 
 app = FastAPI(title="Haiti Wallet Backend")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 Base.metadata.create_all(bind=engine, checkfirst=True)
 
