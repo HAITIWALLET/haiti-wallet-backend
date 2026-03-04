@@ -87,6 +87,15 @@ async def create_request(
 
         proof_url = f"/uploads/{filename}"
 
+        existing = db.query(TopupRequest).filter(
+    TopupRequest.user_id == user.id,
+    TopupRequest.reference == reference,
+    TopupRequest.status == "PENDING"
+).first()
+
+    if existing:
+     raise HTTPException(400, "Une demande avec cette référence existe déjà.")
+
     req = TopupRequest(
         user_id=user.id,
         amount=float(amount),
