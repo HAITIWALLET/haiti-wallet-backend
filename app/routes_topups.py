@@ -1,14 +1,21 @@
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 
 from .db import get_db
 from .models import TopupRequest, User, Transaction, Wallet
-from .schemas import TopupRequestIn, TopupRequestOut, TopupDecisionIn
+from .schemas import TopupRequestOut, TopupDecisionIn
 from .security import get_current_user, require_admin
 from .Services.fees import compute_fee, net_amount
 
+import uuid
+import shutil
+from pathlib import Path
+
 router = APIRouter(prefix="/topups", tags=["topups"])
+
+UPLOAD_DIR = Path("app/uploads")
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 
 # -------------------------
@@ -46,31 +53,50 @@ def _to_out(req: TopupRequest, user_email: str) -> TopupRequestOut:
 
 
 # -------------------------
-# CREATE REQUEST
+# CREATE REQUEST (UPLOAD IMAGE)
 # -------------------------
 @router.post("/request", response_model=TopupRequestOut)
-def create_request(
-    data: TopupRequestIn,
+async def create_request(
+    amount: float = Form(...),
+    currency: str = Form(...),
+    method: str = Form(...),
+    reference: str = Form(...),
+    note: str | None = Form(None),
+    proof: UploadFile | None = File(None),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    fee_check = calc_fee(float(data.amount))
-    if float(data.amount) <= fee_check:
+
+    fee_check = calc_fee(float(amount))
+    if float(amount) <= fee_check:
         raise HTTPException(400, "Montant trop faible")
 
-    fee = compute_fee(float(data.amount))
-    net = net_amount(float(data.amount))
+    fee = compute_fee(float(amount))
+    net = net_amount(float(amount))
+
+    proof_url = None
+
+    if proof:
+        ext = proof.filename.split(".")[-1]
+        filename = f"{uuid.uuid4()}.{ext}"
+
+        file_path = UPLOAD_DIR / filename
+
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(proof.file, buffer)
+
+        proof_url = f"/uploads/{filename}"
 
     req = TopupRequest(
         user_id=user.id,
-        amount=float(data.amount),
+        amount=float(amount),
         fee_amount=fee,
         net_amount=net,
-        currency=data.currency,
-        method=data.method,
-        reference=data.reference,
-        proof_url=data.proof_url,
-        note=data.note,
+        currency=currency,
+        method=method,
+        reference=reference,
+        proof_url=proof_url,
+        note=note,
         status="PENDING",
         created_at=datetime.utcnow(),
     )
@@ -78,6 +104,7 @@ def create_request(
     db.add(req)
     db.commit()
     db.refresh(req)
+
     return _to_out(req, user.email)
 
 
@@ -117,7 +144,7 @@ def pending_requests(
 
 
 # -------------------------
-# DECIDE REQUEST (FIXED)
+# DECIDE REQUEST
 # -------------------------
 @router.post("/{req_id}/decide")
 def decide_request(
@@ -130,7 +157,6 @@ def decide_request(
     if not req:
         raise HTTPException(status_code=404, detail="Demande introuvable")
 
-    # ❌ admin ne peut PAS approuver sa propre recharge
     if admin.role == "admin" and req.user_id == admin.id:
         raise HTTPException(
             status_code=403,
@@ -140,7 +166,6 @@ def decide_request(
     if req.status != "PENDING":
         raise HTTPException(status_code=400, detail="Demande déjà traitée")
 
-    # ✅ LE SEUL CHAMP AUTORISÉ
     decision = (data.status or "").upper()
     if decision not in ("APPROVED", "REJECTED"):
         raise HTTPException(status_code=400, detail="Décision invalide")
@@ -150,9 +175,9 @@ def decide_request(
     req.decided_at = datetime.utcnow()
 
     if decision == "APPROVED":
+
         wallet = db.query(Wallet).filter(Wallet.user_id == req.user_id).first()
 
-        # ✅ CRÉATION AUTO DU WALLET (SANS created_at)
         if not wallet:
             wallet = Wallet(
                 user_id=req.user_id,
@@ -179,6 +204,7 @@ def decide_request(
             rate_used=None,
             created_at=datetime.utcnow(),
         )
+
         db.add(tx)
 
     db.commit()

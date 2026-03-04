@@ -230,10 +230,19 @@ async function api(path, opts = {}) {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  return fetch(path, {
+  const response = await fetch(path, {
     ...opts,
     headers
   });
+
+  if (response.status === 401) {
+    localStorage.removeItem("token");
+    alert("Session expirée. Reconnecte-toi.");
+    window.location.hash = "#login";
+    return response;
+  }
+
+  return response;
 }
 
 /* ---------------------------
@@ -541,29 +550,52 @@ async function createTopupRequest() {
   const msgEl = $("topMsg");
   hideMsg(msgEl);
 
-  const payload = {
-    amount: Number($("topAmount")?.value || 0),
-    currency: $("topCurrency")?.value,
-    method: $("topMethod")?.value,
-    reference: $("topReference")?.value.trim(),
-    proof_url: ($("topProof")?.value || "").trim() || null,
-    note: ($("topNote")?.value || "").trim() || null,
-  };
+  const btn = $("btnTopupRequest");
+  if (btn.disabled) return;
+
+  btn.disabled = true;
+  btn.innerText = "Envoi...";
+
+  const fileInput = $("topProof");
+const file = fileInput.files[0];
+
+const payload = {
+  amount: Number($("topAmount")?.value || 0),
+  currency: $("topCurrency")?.value,
+  method: $("topMethod")?.value,
+  reference: $("topReference")?.value.trim(),
+  note: ($("topNote")?.value || "").trim() || null,
+};
 
   if (!payload.amount || payload.amount <= 0) {
-    showMsg(msgEl, false, "Montant invalide");
-    return;
-  }
+  showMsg(msgEl, false, "Montant invalide");
+  btn.disabled = false;
+  btn.innerText = "Soumettre la demande";
+  return;
+}
   if (!payload.reference || payload.reference.length < 3) {
-    showMsg(msgEl, false, "Référence obligatoire (min 3 caractères)");
-    return;
-  }
+  showMsg(msgEl, false, "Référence obligatoire (min 3 caractères)");
+  btn.disabled = false;
+  btn.innerText = "Soumettre la demande";
+  return;
+}
 
-  const res = await api("/topups/request", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
+const formData = new FormData();
+
+formData.append("amount", payload.amount);
+formData.append("currency", payload.currency);
+formData.append("method", payload.method);
+formData.append("reference", payload.reference);
+formData.append("note", payload.note);
+
+if (file) {
+  formData.append("proof", file);
+}
+
+const res = await api("/topups/request", {
+  method: "POST",
+  body: formData
+});
 
   const j = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -579,6 +611,8 @@ async function createTopupRequest() {
   $("topNote") && ($("topNote").value = "");
 
   await loadMyTopups();
+  btn.disabled = false;
+btn.innerText = "Soumettre la demande";
 }
 
 /* ---------------------------

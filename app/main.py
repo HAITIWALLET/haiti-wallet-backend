@@ -1,18 +1,19 @@
 # app/main.py
 from pathlib import Path
 import os
-import cloudinary
-import cloudinary.uploader
+import uuid
+import shutil
 
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File, Depends
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi import UploadFile, File, Depends
 
 from sqlalchemy import text
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.orm import Session
+
 from fastapi.middleware.cors import CORSMiddleware
+
 from .db import Base, engine, get_db, SessionLocal
 from . import models
 from .models import User
@@ -34,21 +35,11 @@ from .routes_superadmin import router as superadmin_router
 
 
 # ==============================
-# CONFIG CLOUDINARY
-# ==============================
-
-cloudinary.config(
-    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
-    api_key=os.getenv("CLOUDINARY_API_KEY"),
-    api_secret=os.getenv("CLOUDINARY_API_SECRET")
-)
-
-
-# ==============================
 # APP
 # ==============================
 
 app = FastAPI(title="Haiti Wallet Backend")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -79,6 +70,7 @@ except ProgrammingError:
 
 @app.on_event("startup")
 def seed_superadmin():
+
     db = SessionLocal()
 
     email = "adminndk@haiti.com"
@@ -87,14 +79,17 @@ def seed_superadmin():
     existing = db.query(User).filter(User.email == email).first()
 
     if not existing:
+
         user = User(
             email=email,
             password_hash=hash_password(password),
             role="superadmin",
             status="active"
         )
+
         db.add(user)
         db.commit()
+
         print("Superadmin created")
 
     db.close()
@@ -120,7 +115,7 @@ app.include_router(superadmin_router)
 
 
 # ==============================
-# STATIC
+# STATIC FILES
 # ==============================
 
 static_dir = Path(__file__).resolve().parent / "static"
@@ -128,7 +123,17 @@ app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 
 # ==============================
-# CLOUDINARY UPLOAD
+# UPLOADS
+# ==============================
+
+uploads_dir = Path(__file__).resolve().parent / "uploads"
+uploads_dir.mkdir(exist_ok=True)
+
+app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
+
+
+# ==============================
+# PROFILE IMAGE UPLOAD (LOCAL)
 # ==============================
 
 @app.post("/upload-profile-picture")
@@ -137,8 +142,17 @@ async def upload_profile_picture(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    result = cloudinary.uploader.upload(file.file)
-    image_url = result["secure_url"]
+
+    ext = file.filename.split(".")[-1]
+
+    filename = f"{uuid.uuid4()}.{ext}"
+
+    file_path = uploads_dir / filename
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    image_url = f"/uploads/{filename}"
 
     current_user.profile_image = image_url
     db.commit()
