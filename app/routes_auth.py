@@ -57,26 +57,21 @@ def generate_ref_code(db: Session, length=8):
 @router.post("/register")
 def register(data: RegisterIn, db: Session = Depends(get_db)):
 
-    email = data.get("email","").lower().strip()
-    password = data.get("password","").strip()
-    first_name = data.get("first_name")
-    last_name = data.get("last_name")
-    ref = data.get("ref")
-
-    if not email or not password:
-        raise HTTPException(400,"Email et mot de passe requis")
+    email = data.email.lower().strip()
+    password = data.password.strip()
+    first_name = data.first_name
+    last_name = data.last_name
+    ref = data.ref
 
     validate_password(password)
 
     existing = db.query(User).filter(User.email == email).first()
     if existing:
-        raise HTTPException(400,"Email déjà utilisé")
+        raise HTTPException(400, "Email déjà utilisé")
 
-    # génération code parrainage
     my_ref_code = generate_ref_code(db)
 
     referred_by_user_id = None
-
     if ref:
         ref_user = db.query(User).filter(User.ref_code == ref).first()
         if ref_user:
