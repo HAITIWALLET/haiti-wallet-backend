@@ -6,10 +6,10 @@ from datetime import datetime
 # AUTH
 # -------------------------
 class RegisterIn(BaseModel):
-    first_name: str = Field(min_length=2, max_length=80)
-    last_name: str = Field(min_length=2, max_length=80)
     email: EmailStr
-    password: str = Field(min_length=8, max_length=120)
+    password: str
+    first_name: str
+    last_name: str
     ref: Optional[str] = None
 
 
