@@ -746,6 +746,13 @@ async function loadPendingTopups() {
         <td>${t.currency}</td>
         <td>${t.method}</td>
         <td>${t.reference}</td>
+        <td>
+  ${
+    t.proof_url
+      ? `<a href="${t.proof_url}" target="_blank">📷 Voir</a>`
+      : "-"
+  }
+</td>
         <td>${safeDate(t.created_at)}</td>
         <td>${pill(t.status)}</td>
         <td>
