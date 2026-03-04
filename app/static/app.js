@@ -596,8 +596,11 @@ if (file) {
   formData.append("proof", file);
 }
 
-const res = await api("/topups/request", {
+const res = await fetch("/topups/request", {
   method: "POST",
+  headers: {
+    "Authorization": `Bearer ${token}`
+  },
   body: formData
 });
 
