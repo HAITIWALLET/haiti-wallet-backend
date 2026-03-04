@@ -5,15 +5,12 @@ from sqlalchemy.exc import OperationalError
 from datetime import datetime, timedelta
 import string
 import secrets
-import random
-from datetime import datetime, timedelta
-
 from .db import get_db
-from .models import User, Wallet, PhoneOTP, PasswordReset
+from .models import User, Wallet, PasswordReset
 from .models_audit import AuditLog
 from .schemas import (
     TokenOut, MeOut,
-    PhoneStartIn, PhoneVerifyIn,
+    RegisterIn,
     ForgotPasswordIn, ForgotPasswordOut,
     ResetPasswordIn, ResetPasswordOut,
     ChangePasswordSchema
@@ -54,136 +51,62 @@ def generate_ref_code(db: Session, length=8):
         if not exists:
             return code
 
-
 # -------------------------------------------------
-# OTP helpers
+# REGISTER
 # -------------------------------------------------
-def generate_otp_code(length=6):
-    return "".join(secrets.choice(string.digits) for _ in range(length))
+@router.post("/register")
+def register(data: RegisterIn, db: Session = Depends(get_db)):
 
+    email = data.get("email","").lower().strip()
+    password = data.get("password","").strip()
+    first_name = data.get("first_name")
+    last_name = data.get("last_name")
+    ref = data.get("ref")
 
-def normalize_phone(phone: str) -> str:
-    return phone.strip()
+    if not email or not password:
+        raise HTTPException(400,"Email et mot de passe requis")
 
+    validate_password(password)
 
-def send_sms_simulated(phone: str, code: str):
-    print(f"[SIMULATED SMS] to={phone} code={code}")
+    existing = db.query(User).filter(User.email == email).first()
+    if existing:
+        raise HTTPException(400,"Email déjà utilisé")
 
-import os
-import smtplib
-from email.mime.text import MIMEText
+    # génération code parrainage
+    my_ref_code = generate_ref_code(db)
 
-def send_email_otp(email: str, code: str):
-    smtp_user = os.getenv("SMTP_USER")
-    smtp_pass = os.getenv("SMTP_PASS")
+    referred_by_user_id = None
 
-    msg = MIMEText(f"Votre code Haiti Wallet est : {code}")
-    msg["Subject"] = "Code de vérification"
-    msg["From"] = smtp_user
-    msg["To"] = email
-
-    with smtplib.SMTP("smtp.gmail.com", 587, timeout=20) as server:
-        server.starttls()
-        server.login(smtp_user, smtp_pass)
-        server.send_message(msg)
-        
-# -------------------------------------------------
-# PHONE OTP START
-# -------------------------------------------------
-@router.post("/phone/start")
-def phone_start(data: PhoneStartIn, db: Session = Depends(get_db)):
-    phone = normalize_phone(data.phone)
-    email = data.email.lower().strip()
-    if len(phone) < 8:
-        raise HTTPException(400, "Numéro invalide")
-
-    last = (
-        db.query(PhoneOTP)
-        .filter(PhoneOTP.phone == phone)
-        .order_by(PhoneOTP.created_at.desc())
-        .first()
-    )
-    if last and (datetime.utcnow() - last.created_at).total_seconds() < 60:
-        raise HTTPException(429, "Attends 60 secondes avant de redemander un code")
-
-    code = generate_otp_code()
-    now = datetime.utcnow()
-
-    otp = PhoneOTP(
-        phone=phone,
-        code=code,
-        created_at=now,
-        expires_at=now + timedelta(minutes=10),
-        used=False,
-    )
-    db.add(otp)
-    db.commit()
-
-    send_email_otp(email, code)
-    return {"ok": True, "message": "Code envoyé (valide 10 minutes)"}
-
-
-# -------------------------------------------------
-# VERIFY OTP + REGISTER
-# -------------------------------------------------
-@router.post("/phone/verify_register", response_model=TokenOut)
-def phone_verify_and_register(data: PhoneVerifyIn, db: Session = Depends(get_db)):
-    phone = normalize_phone(data.phone)
-    email = data.email.lower().strip()
-    password = data.password.strip()
-
-    if len(password) < 6:
-        raise HTTPException(400, "Mot de passe trop court")
-
-    otp = (
-        db.query(PhoneOTP)
-        .filter(
-            PhoneOTP.phone == phone,
-            PhoneOTP.code == data.code,
-            PhoneOTP.used == False,
-        )
-        .order_by(PhoneOTP.created_at.desc())
-        .first()
-    )
-    if not otp or otp.expires_at < datetime.utcnow():
-        raise HTTPException(400, "Code invalide ou expiré")
-
-    otp.used = True
-    db.commit()
-
-    if db.query(User).filter(User.email == email).first():
-        raise HTTPException(400, "Email déjà utilisé")
-    
-    existing_user = db.query(User).filter(User.phone == phone).first()
-    if existing_user:
-        raise HTTPException(
-        status_code=400,
-        detail="Ce numéro est déjà utilisé."
-    )
-
+    if ref:
+        ref_user = db.query(User).filter(User.ref_code == ref).first()
+        if ref_user:
+            referred_by_user_id = ref_user.id
 
     user = User(
         email=email,
-        phone=phone,
-        phone_verified=True,
         password_hash=hash_password(password),
         role="user",
-        ref_code=generate_ref_code(db),
-        created_at=datetime.utcnow(),
-        first_name=data.first_name,
-        last_name=data.last_name,
+        status="active",
+        first_name=first_name,
+        last_name=last_name,
+        ref_code=my_ref_code,
+        referred_by_user_id=referred_by_user_id
     )
+
     db.add(user)
     db.commit()
     db.refresh(user)
 
-    wallet = Wallet(user_id=user.id, htg=0.0, usd=0.0)
+    wallet = Wallet(user_id=user.id)
     db.add(wallet)
     db.commit()
 
-    token = create_access_token(subject=user.email)
-    return TokenOut(access_token=token)
-
+    return {
+        "ok": True,
+        "email": user.email,
+        "role": user.role,
+        "ref_code": user.ref_code
+    }
 
 # -------------------------------------------------
 # PASSWORD FORGOT / RESET
@@ -330,16 +253,20 @@ import smtplib
 from email.mime.text import MIMEText
 
 def send_email(to_email, content):
-    from email.mime.text import MIMEText
+    import os
     import smtplib
+    from email.mime.text import MIMEText
+
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_pass = os.getenv("SMTP_PASS")
 
     msg = MIMEText(content)
     msg["Subject"] = "Haiti Wallet Notification"
-    msg["From"] = "contacthaitiwallet@gmail.com"
+    msg["From"] = smtp_user
     msg["To"] = to_email
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login("contacthaitiwallet@gmail.com", "iquhqohdrotxtkku")
+        server.login(smtp_user, smtp_pass)
         server.send_message(msg)
 
 from pydantic import BaseModel

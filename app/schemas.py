@@ -6,26 +6,11 @@ from datetime import datetime
 # AUTH
 # -------------------------
 class RegisterIn(BaseModel):
-    email: EmailStr
-    password: str
-    ref: Optional[str] = None   # ✅ optionnel, ne bloque pas
-
-
-class PhoneStartIn(BaseModel):
-    phone: str
-    email: EmailStr
-
-
-class PhoneVerifyIn(BaseModel):
-    phone: str
-    code: str
-    email: EmailStr
-    password: str
-    ref: Optional[str] = None
-
-    # ✅ NOUVEAU : identité légale
     first_name: str = Field(min_length=2, max_length=80)
     last_name: str = Field(min_length=2, max_length=80)
+    email: EmailStr
+    password: str = Field(min_length=8, max_length=120)
+    ref: Optional[str] = None
 
 
 class RegisterOut(BaseModel):

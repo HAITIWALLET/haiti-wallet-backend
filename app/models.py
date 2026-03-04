@@ -134,15 +134,6 @@ class ReferralReward(Base):
     note = Column(String, nullable=True)
 
 
-class PhoneOTP(Base):
-    __tablename__ = "phone_otps"
-
-    id = Column(Integer, primary_key=True, index=True)
-    phone = Column(String, unique=True, index=True, nullable=False)
-    code = Column(String, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    expires_at = Column(DateTime, nullable=False)
-    used = Column(Boolean, default=False, nullable=False)
 
 class PasswordReset(Base):
     __tablename__ = "password_resets"

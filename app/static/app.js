@@ -1675,117 +1675,34 @@ $("btnCloseRegister") &&
 $("loginBox")?.classList.remove("hide");
 $("appBox")?.classList.add("hide");
 
-/* =========================================================
-   ✅ AJOUT — OTP PHONE (match ton index.html)
-   IDs HTML:
-   reg-first, reg-last, reg-phone, reg-otp, reg-email, reg-pass, reg-ref
-   btnSendOtp, do-register
-========================================================= */
-
-// 1) Envoi OTP
-$("btnSendOtp") && ($("btnSendOtp").onclick = async () => {
-  const msgEl = $("registerMsg");
-  hideMsg(msgEl);
-
-  const phone = ($("reg-phone")?.value || "").trim();
-if (!phone || phone.length < 8)
-    return showMsg(msgEl, false, "Numéro invalide.");
-
-const email = ($("reg-email")?.value || "").trim();
-if (!email)
-    return showMsg(msgEl, false, "Email requis.");
-
-const res = await fetch("/auth/phone/start", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ phone, email })
-});
-
-  const j = await res.json().catch(() => ({}));
-  if (!res.ok) return showMsg(msgEl, false, j.detail || "Erreur envoi code");
-
-  showMsg(msgEl, true, j.message || "Code envoyé.");
-});
-
-// 2) Inscription via OTP (utilise le même bouton do-register)
-// ⚠️ On ne supprime PAS l'ancien listener déjà au-dessus.
-// On ajoute une logique "si champs OTP présents -> on fait verify_register".
-$("do-register") && $("do-register").addEventListener("click", async () => {
+$("do-register") && ($("do-register").onclick = async () => {
 
   const msgEl = $("registerMsg");
   hideMsg(msgEl);
 
-  const first_name = ($("reg-first")?.value || "").trim();
-  const last_name  = ($("reg-last")?.value || "").trim();
-  const phone      = ($("reg-phone")?.value || "").trim();
-  const code       = ($("reg-otp")?.value || "").trim();
-  const email      = ($("reg-email")?.value || "").trim();
-  const password   = ($("reg-pass")?.value || "").trim();
-  const ref        = ($("reg-ref")?.value || "").trim();
+  const email = $("reg-email").value.trim();
+  const password = $("registerPassword").value.trim();
+  const ref = $("reg-ref").value.trim();
+  const first_name = $("reg-first").value.trim();
+  const last_name = $("reg-last").value.trim();
 
-  if (!first_name || !last_name)
-    return showMsg(msgEl, false, "Nom et prénom requis.");
+  if (!email || !password) {
+    return showMsg(msgEl,false,"Email et mot de passe requis");
+  }
 
-  if (!phone || phone.length < 8)
-    return showMsg(msgEl, false, "Téléphone invalide.");
-
-  if (!code || code.length < 4)
-    return showMsg(msgEl, false, "Code SMS requis.");
-
-  if (!email || email.length < 5)
-    return showMsg(msgEl, false, "Email requis.");
-
-  if (!password || password.length < 6)
-    return showMsg(msgEl, false, "Mot de passe min 6.");
-
-  console.log("📤 Envoi vers verify_register...");
-  console.log({
-    phone,
-    code,
-    email,
-    password,
-    ref,
-    first_name,
-    last_name
-  });
-
-  const res = await fetch("/auth/phone/verify_register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      phone,
-      code,
-      email,
-      password,
-      ref: ref || null,
-      first_name,
-      last_name
-    })
-  });
-
-  console.log("📡 Status:", res.status);
-
-  const raw = await res.text();
-  console.log("📦 Raw response:", raw);
-
-  let data = {};
   try {
-    data = JSON.parse(raw);
-  } catch (e) {
-    console.log("⚠️ JSON parse error");
+
+    await registerUser(first_name,last_name,email,password,ref);
+
+    showMsg(msgEl,true,"Compte créé. Tu peux te connecter.");
+
+  } catch(e) {
+
+    showMsg(msgEl,false,e.message);
+
   }
 
-  if (!res.ok) {
-    console.log("❌ Backend error:", data);
-    return showMsg(msgEl, false, data.detail || "Erreur d'inscription");
-  }
-
-  console.log("✅ Succès inscription");
-  showMsg(msgEl, true, "✅ Compte créé. Tu peux te connecter.");
-
-  if ($("email")) $("email").value = email;
 });
-
 /* =========================================================
    ⚠️ TON CODE ORIGINAL (non supprimé) — fin
 ========================================================= */

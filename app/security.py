@@ -8,7 +8,9 @@ from sqlalchemy.orm import Session
 from .db import get_db
 from .models import User
 
-SECRET_KEY = "CHANGE_ME_SUPER_SECRET"
+import os
+
+SECRET_KEY = os.getenv("SECRET_KEY", "dev_secret_key")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 
@@ -27,10 +29,11 @@ def verify_password(password: str, password_hash: str) -> bool:
 def create_access_token(subject: str) -> str:
     now = datetime.utcnow()
     payload = {
-        "sub": subject,
-        "iat": now,
-        "exp": now + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
-    }
+    "sub": subject,
+    "type": "access",
+    "iat": now,
+    "exp": now + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+}
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 
