@@ -1,3 +1,7 @@
+setInterval(() => {
+  fetch("https://haiti-wallet-backend-c2u5.onrender.com/")
+}, 5 * 60 * 1000);
+
 // ----- Gestion impersonate via URL -----
 const urlParams = new URLSearchParams(window.location.search);
 const impersonateToken = urlParams.get("impersonate");
@@ -2107,3 +2111,20 @@ function drawRevenueChart(monthlyData) {
 document.addEventListener("DOMContentLoaded", () => {
   loadRevenueStats();
 });
+
+function updateReferralVisibility() {
+
+  const hash = window.location.hash
+  const box = document.getElementById("referralBox")
+
+  if (!box) return
+
+  if (hash === "#dashboard" || hash === "") {
+    box.style.display = "block"
+  } else {
+    box.style.display = "none"
+  }
+
+}
+window.addEventListener("hashchange", updateReferralVisibility)
+window.addEventListener("load", updateReferralVisibility)
