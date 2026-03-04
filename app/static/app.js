@@ -320,15 +320,26 @@ if (j.user?.role === "superadmin") {
 
 }
 
-async function registerUser(email, password, ref) {
+async function registerUser(first_name, last_name, email, password, ref) {
+
   const res = await fetch("/auth/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password, ref: (ref || "").trim() || null }),
+    body: JSON.stringify({
+      first_name: first_name,
+      last_name: last_name,
+      email: email,
+      password: password,
+      ref: (ref || "").trim()
+    })
   });
 
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.detail || "Erreur inscription");
+  const data = await res.json().catch(()=>({}));
+
+  if (!res.ok) {
+    throw new Error(data.detail || "Erreur inscription");
+  }
+
   return data;
 }
 
@@ -1698,7 +1709,7 @@ $("do-register") && ($("do-register").onclick = async () => {
 
   } catch(e) {
 
-    showMsg(msgEl,false,e.message);
+    showMsg(msgEl,false,e.detail || e.message);
 
   }
 
