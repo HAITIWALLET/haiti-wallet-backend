@@ -2009,7 +2009,7 @@ async function sendDeleteRequest() {
 }
 
 function showDeleteAccount() {
-    window.location.href = "/static/index.html";
+  window.location.href = "/static/delete-account.html";
 }
 
 // === MENU FIX FINAL ===
