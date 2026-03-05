@@ -159,3 +159,23 @@ class Merchant(Base):
     active = Column(Boolean, default=True)
 
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class Subscription(Base):
+    __tablename__ = "subscriptions"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    user_id = Column(Integer, nullable=False)
+    merchant_id = Column(Integer, nullable=False)
+
+    amount = Column(Float, nullable=False)
+    currency = Column(String, nullable=False)
+
+    interval = Column(String, nullable=False)
+    interval_count = Column(Integer, default=1)
+
+    next_billing_date = Column(DateTime, nullable=False)
+
+    active = Column(Boolean, default=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
