@@ -2,7 +2,8 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
-
+import secrets
+from .models import Merchant
 from .db import get_db
 from .models import FxSetting, User, Transaction
 from .schemas import FxIn, FxOut
@@ -116,3 +117,29 @@ def admin_wallet_adjust(
         new_balance_usd=float(u.wallet.usd or 0),
         tx_id=getattr(tx, "id", None),
     )
+
+@router.post("/merchants/create")
+def create_merchant(
+    name: str,
+    callback_url: str | None = None,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    api_key = secrets.token_hex(32)
+
+    merchant = Merchant(
+        name=name,
+        api_key=api_key,
+        callback_url=callback_url,
+        active=True
+    )
+
+    db.add(merchant)
+    db.commit()
+    db.refresh(merchant)
+
+    return {
+        "merchant_id": merchant.id,
+        "name": merchant.name,
+        "api_key": merchant.api_key
+    }
