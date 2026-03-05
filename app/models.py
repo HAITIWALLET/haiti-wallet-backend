@@ -144,3 +144,18 @@ class PasswordReset(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     expires_at = Column(DateTime, nullable=False)
     used = Column(Boolean, default=False, nullable=False)
+
+
+class Merchant(Base):
+    __tablename__ = "merchants"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+
+    api_key = Column(String, unique=True, index=True, nullable=False)
+
+    callback_url = Column(String, nullable=True)
+
+    active = Column(Boolean, default=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
