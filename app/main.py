@@ -131,8 +131,8 @@ app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 uploads_dir = Path(__file__).resolve().parent / "uploads"
 
-if not uploads_dir.exists():
-    uploads_dir.mkdir(parents=True)
+# créer le dossier si absent
+uploads_dir.mkdir(parents=True, exist_ok=True)
 
 app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
 
