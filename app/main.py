@@ -129,12 +129,14 @@ app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 # UPLOADS
 # =========================
 
+import os
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
+
 uploads_dir = Path(__file__).resolve().parent / "uploads"
 
-try:
-    uploads_dir.mkdir(parents=True)
-except FileExistsError:
-    pass
+# créer le dossier s'il n'existe pas
+os.makedirs(uploads_dir, exist_ok=True)
 
 app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
 
