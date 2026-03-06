@@ -125,12 +125,14 @@ static_dir = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 
-# ==============================
+# =========================
 # UPLOADS
-# ==============================
+# =========================
 
 uploads_dir = Path(__file__).resolve().parent / "uploads"
-uploads_dir.mkdir(parents=True, exist_ok=True)
+
+if not uploads_dir.exists():
+    uploads_dir.mkdir(parents=True)
 
 app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
 
