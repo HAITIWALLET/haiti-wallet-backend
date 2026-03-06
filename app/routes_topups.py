@@ -14,7 +14,7 @@ from pathlib import Path
 
 router = APIRouter(prefix="/topups", tags=["topups"])
 
-UPLOAD_DIR = Path("app/uploads")
+UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 
