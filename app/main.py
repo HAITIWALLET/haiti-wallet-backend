@@ -34,6 +34,7 @@ from .routes_admin_users import router as admin_users_router
 from .routes_superadmin import router as superadmin_router
 from .routes_merchant import router as merchant_router
 from .routes_subscriptions import router as subscriptions_router
+from .subscription_billing import run_subscription_billing
 
 # ==============================
 # APP
@@ -169,3 +170,19 @@ async def upload_profile_picture(
 @app.get("/", include_in_schema=False)
 def root():
     return RedirectResponse(url="/static/index.html")
+
+import threading
+import time
+
+
+def billing_worker():
+    while True:
+        try:
+            run_subscription_billing()
+        except Exception as e:
+            print("Subscription billing error:", e)
+
+        time.sleep(3600)
+
+
+threading.Thread(target=billing_worker, daemon=True).start()
