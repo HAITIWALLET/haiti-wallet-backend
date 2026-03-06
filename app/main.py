@@ -33,6 +33,7 @@ from .routes_admin_wallet import router as admin_wallet_router
 from .routes_admin_users import router as admin_users_router
 from .routes_superadmin import router as superadmin_router
 from .routes_merchant import router as merchant_router
+from .routes_subscriptions import router as subscriptions_router
 
 # ==============================
 # APP
@@ -113,6 +114,7 @@ app.include_router(admin_wallet_router)
 app.include_router(admin_users_router)
 app.include_router(superadmin_router)
 app.include_router(merchant_router)
+app.include_router(subscriptions_router)
 
 # ==============================
 # STATIC FILES
